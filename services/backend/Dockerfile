@@ -10,12 +10,16 @@ RUN cd /app/src && \
     go build -o /app/server server.go
 
 # Create a smaller image for the final executable
-FROM alpine:latest
+FROM golang:alpine
 
 WORKDIR /root/
 
 COPY --from=builder /app/server .
 
+COPY entrypoint.sh .
+
+RUN chmod +x entrypoint.sh
+
 EXPOSE 3001
 
-CMD ["./server"]
+ENTRYPOINT [ "./entrypoint.sh" ]

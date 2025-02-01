@@ -11,6 +11,8 @@ COPY package*.json /app/
 # Install dependencies (if you have them)
 RUN npm install
 
+RUN npm install -g nodemon
+
 # Copy the rest of your application code into the container
 COPY src /app
 
@@ -18,4 +20,4 @@ COPY src /app
 EXPOSE 3000
 
 # Define the command to start your Node.js app
-CMD ["node", "index.js"]
+CMD ["nodemon", "index.js"]

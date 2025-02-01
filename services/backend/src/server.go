@@ -1,11 +1,12 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"net/http"
+
 	"github.com/gorilla/websocket"
 	"github.com/segmentio/kafka-go"
-	"context"
 )
 
 var upgrader = websocket.Upgrader{
@@ -16,7 +17,7 @@ var upgrader = websocket.Upgrader{
 
 func usersHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/plain")
-	w.Write([]byte("Hello, Server"))
+	w.Write([]byte("Hello, Server1"))
 }
 
 func wsHandler(w http.ResponseWriter, r *http.Request) {

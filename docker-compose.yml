@@ -8,6 +8,9 @@ services:
       - "3000:3000"
     environment:
       - BACKEND_URL=http://kayori-backend-service:3001
+      - NODE_ENV=development
+    volumes:
+      - services/frontend/src/:/app
     depends_on:
       - backend
     networks:
@@ -21,8 +24,12 @@ services:
     depends_on:
       - database
       - kafka
+    volumes:
+      - services/backend/:/app
     networks:
       - kayori-network
+    environment:
+      - DEV_MODE=true
 
   database:
     image: postgres:latest
