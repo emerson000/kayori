@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kayori-frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kayori-frontend
+  template:
+    metadata:
+      labels:
+        app: kayori-frontend
+    spec:
+      containers:
+      - name: kayori-frontend
+        image: kayori-frontend
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 3000
+        env:
+        - name: BACKEND_URL
+          value: "http://kayori-backend-service"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kayori-frontend-service
+spec:
+  selector:
+    app: kayori-frontend
+  type: ClusterIP
+  ports:
+  - port: 3000
+    targetPort: 3000
+    protocol: TCP
