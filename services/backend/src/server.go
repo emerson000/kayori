@@ -73,7 +73,7 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	http.HandleFunc("/api/users", usersHandler)
-	http.HandleFunc("/ws", wsHandler)
+	http.HandleFunc("/api/ws", wsHandler)
 
 	server := &http.Server{Addr: ":3001"}
 	fmt.Println("Server listening on port 3001")

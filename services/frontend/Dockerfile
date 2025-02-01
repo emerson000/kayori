@@ -11,13 +11,16 @@ COPY package*.json /app/
 # Install dependencies (if you have them)
 RUN npm install
 
-RUN npm install -g nodemon
-
 # Copy the rest of your application code into the container
-COPY src /app
+COPY . /app
 
-# Expose the port your app runs on (optional, helps for readability/documentation)
+# Ensure entrypoint.sh is copied into the container
+COPY entrypoint.sh /app/entrypoint.sh
+
+RUN npm run build
+
+RUN chmod +x /app/entrypoint.sh
+
 EXPOSE 3000
 
-# Define the command to start your Node.js app
-CMD ["nodemon", "index.js"]
+CMD /app/entrypoint.sh

@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   frontend:
     build:
@@ -7,16 +5,18 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - BACKEND_URL=http://kayori-backend-service:3001
+      - BACKEND_URL=http://backend:3001
       - NODE_ENV=development
+      - DEV_MODE=true
     volumes:
-      - services/frontend/src/:/app
+      - ./services/frontend/:/app
     depends_on:
       - backend
     networks:
       - kayori-network
 
   backend:
+    hostname: backend
     build:
       context: ./services/backend
     ports:
@@ -25,7 +25,7 @@ services:
       - database
       - kafka
     volumes:
-      - services/backend/:/app
+      - ./services/backend/:/app
     networks:
       - kayori-network
     environment:
@@ -39,6 +39,8 @@ services:
       POSTGRES_DB: kayori
     networks:
       - kayori-network
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
 
   kafka-ui:
       container_name: kafka-ui
@@ -76,7 +78,13 @@ services:
       KAFKA_JMX_HOSTNAME: kafka
     networks:
       - kayori-network
+    volumes:
+      - kafka-data:/var/lib/kafka/data
 
 networks:
   kayori-network:
     driver: bridge
+
+volumes:
+  postgres-data:
+  kafka-data:
