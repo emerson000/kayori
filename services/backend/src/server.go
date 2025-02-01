@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/gorilla/websocket"
@@ -43,6 +44,10 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 		for {
 			m, err := kafkaReader.ReadMessage(context.Background())
 			if err != nil {
+				if err == io.EOF {
+					fmt.Println("Kafka read error: EOF")
+					break
+				}
 				fmt.Println("Kafka read error:", err)
 				break
 			}
@@ -54,6 +59,10 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 	for {
 		_, message, err := conn.ReadMessage()
 		if err != nil {
+			if websocket.IsCloseError(err, websocket.CloseNormalClosure, websocket.CloseGoingAway) {
+				fmt.Println("WebSocket closed:", err)
+				break
+			}
 			fmt.Println("Read error:", err)
 			break
 		}
