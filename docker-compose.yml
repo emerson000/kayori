@@ -66,7 +66,7 @@ services:
       CLUSTER_ID: "Ynf7N8PUR6GLybrJW7MriA"
       KAFKA_NODE_ID: 1
       KAFKA_PROCESS_ROLES: broker,controller
-      KAFKA_LISTENERS: 'PLAINTEXT://kafka:29092,CONTROLLER://kafka:29093,PLAINTEXT_HOST://localhost:9092'
+      KAFKA_LISTENERS: 'PLAINTEXT://kafka:29092,CONTROLLER://kafka:29093,PLAINTEXT_HOST://0.0.0.0:9092'
       KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092'
       KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:29093
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
@@ -80,6 +80,20 @@ services:
       - kayori-network
     volumes:
       - kafka-data:/var/lib/kafka/data
+
+  drone:
+    build:
+      context: ./services/drone
+    depends_on:
+      - kafka
+      - database
+    volumes:
+      - ./services/drone/:/app
+    environment:
+      - KAFKA_BROKER=kafka:29092
+      - DEV_MODE=true
+    networks:
+      - kayori-network
 
 networks:
   kayori-network:
