@@ -2,14 +2,12 @@ package rss
 
 import (
 	"crypto/sha256"
-	"encoding/json"
 	"fmt"
 	"log"
 	"sync"
 	"time"
 
 	"github.com/mmcdole/gofeed"
-	"kayori.io/drone/internal/kafka"
 	"kayori.io/drone/internal/models"
 )
 
@@ -28,7 +26,7 @@ type Task struct {
 	Urls []string `json:"urls"`
 }
 
-func ProcessTask(task *Task, producer *kafka.Producer) {
+func ProcessTask(task *Task, postJSON func(url string, data interface{}) error) {
 	processURL := func(url string) {
 		log.Printf("RSS URL: %+v", url)
 		fp := gofeed.NewParser()
@@ -64,14 +62,10 @@ func ProcessTask(task *Task, producer *kafka.Producer) {
 				}
 				newsArticle.Source = url
 				newsArticle.Checksum = calculateChecksum(newsArticle)
-				jsonItem, err := json.Marshal(newsArticle)
+				// Publish message to Redis topic
+				err = postJSON("http://backend:3001/api/news_article", newsArticle)
 				if err != nil {
-					log.Printf("Error marshaling feed item: %v", err)
-					return
-				}
-				err = producer.SendMessage(string(jsonItem))
-				if err != nil {
-					log.Printf("Error sending feed item: %v", err)
+					log.Printf("Error publishing to backend API: %v", err)
 					return
 				}
 				log.Printf("Found news article: %v", item.Title)

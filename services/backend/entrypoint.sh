@@ -1,6 +1,8 @@
 #!/bin/sh
 set -e
 
+redis-server /etc/redis.conf &
+
 if [ "$DEV_MODE" = "true" ]; then
   echo "Running in development mode: executing 'go run'"
   cd /app

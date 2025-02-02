@@ -1,9 +1,11 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"log"
+	"net/http"
 
 	"kayori.io/drone/internal/kafka"
 	"kayori.io/drone/internal/providers/rss"
@@ -24,9 +26,9 @@ func main() {
 	fmt.Println("Drone awaiting dispatch")
 
 	consumer := kafka.NewConsumer()
-	producer := kafka.NewProducer()
+
 	err := consumer.Start(func(value []byte) {
-		processMessage(value, producer)
+		processMessage(value)
 	})
 	if err != nil {
 		log.Fatalf("Error starting consumer: %v", err)
@@ -45,7 +47,7 @@ const (
 	RssService ServiceType = "rss"
 )
 
-func processMessage(value []byte, producer *kafka.Producer) {
+func processMessage(value []byte) {
 	var msg DroneJob
 	err := json.Unmarshal(value, &msg)
 	if err != nil {
@@ -62,9 +64,29 @@ func processMessage(value []byte, producer *kafka.Producer) {
 	}
 	switch msg.Service {
 	case RssService:
-		rss.ProcessTask(msg.Task.(*rss.Task), producer)
+		rss.ProcessTask(msg.Task.(*rss.Task), postJSON)
 	}
+
 	log.Printf("Processed job: %+v", msg.Service)
+}
+
+func postJSON(url string, data interface{}) error {
+	jsonData, err := json.Marshal(data)
+	if err != nil {
+		return fmt.Errorf("error marshaling JSON: %v", err)
+	}
+
+	resp, err := http.Post(url, "application/json", bytes.NewBuffer(jsonData))
+	if err != nil {
+		return fmt.Errorf("error making POST request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusCreated {
+		return fmt.Errorf("received non-OK response: %v", resp.Status)
+	}
+
+	return nil
 }
 
 func unmarshalTask(msg *DroneJob, value []byte) error {

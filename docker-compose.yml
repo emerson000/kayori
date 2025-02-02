@@ -21,6 +21,7 @@ services:
       context: ./services/backend
     ports:
       - "3001:3001"
+      - "6379:6379"
     depends_on:
       - database
       - kafka
@@ -32,15 +33,18 @@ services:
       - DEV_MODE=true
 
   database:
-    image: postgres:latest
+    image: cassandra:latest
+    hostname: cassandra
+    ports:
+      - "9042:9042"
     environment:
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: kayori
+      - CASSANDRA_CLUSTER_NAME=KayoriCluster
+      - CASSANDRA_DC=datacenter1
+      - CASSANDRA_RACK=rack1
     networks:
       - kayori-network
     volumes:
-      - postgres-data:/var/lib/postgresql/data
+      - cassandra_data:/var/lib/cassandra
 
   kafka-ui:
       container_name: kafka-ui
@@ -100,5 +104,5 @@ networks:
     driver: bridge
 
 volumes:
-  postgres-data:
+  cassandra_data:
   kafka-data:
