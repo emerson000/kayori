@@ -45,7 +45,7 @@ func ProcessTask(task *Task, postJSON func(url string, data interface{}) error) 
 				var newsArticle models.NewsArticle
 				newsArticle.Title = item.Title
 				if item.Link != "" {
-					newsArticle.Url = item.Link
+					newsArticle.URL = item.Link
 				}
 				newsArticle.Description = item.Description
 				if item.Author != nil {
@@ -53,14 +53,15 @@ func ProcessTask(task *Task, postJSON func(url string, data interface{}) error) 
 				}
 				if item.Published != "" {
 					if item.PublishedParsed != nil {
-						newsArticle.PublishedUnix = fmt.Sprintf("%d", item.PublishedParsed.Unix())
+						newsArticle.Timestamp = item.PublishedParsed.Unix()
 						newsArticle.Published = item.PublishedParsed.Format(time.RFC3339)
 					}
 				}
 				if item.Categories != nil {
 					newsArticle.Categories = item.Categories
 				}
-				newsArticle.Source = url
+				newsArticle.SourceID = url
+				log.Printf("Source ID: %v", newsArticle.SourceID)
 				newsArticle.Checksum = calculateChecksum(newsArticle)
 				// Publish message to Redis topic
 				err = postJSON("http://backend:3001/api/news_article", newsArticle)

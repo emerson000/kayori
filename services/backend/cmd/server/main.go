@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"log"
 	"sync"
+	"time"
 
 	"github.com/gocql/gocql"
 	"github.com/gofiber/contrib/websocket"
@@ -37,17 +38,25 @@ func main() {
 		return c.SendString("Hello, world")
 	})
 
+	app.Post("/api/rss", func (c *fiber.Ctx) error {
+		type RssJob struct {
+			Title string `json:"title"`
+			Urls []string `json:"urls"`
+		}
+		return c.SendString("Hello, world")
+	})
+	
 	app.Post("/api/news_article", func(c *fiber.Ctx) error {
 		type NewsArticle struct {
-			ID            gocql.UUID `json:"id"`
+			ArtifactID    gocql.UUID `json:"artifact_id"`
 			Title         string     `json:"title"`
 			Description   string     `json:"description"`
 			URL           string     `json:"url"`
 			Published     string     `json:"published"`
-			PublishedUnix string     `json:"published_unix"`
+			Timestamp     int64      `json:"timestamp"`
 			Author        string     `json:"author"`
 			Categories    []string   `json:"categories"`
-			Source        string     `json:"source"`
+			SourceID      string     `json:"source_id"`
 			Checksum      string     `json:"checksum"`
 		}
 
@@ -56,50 +65,43 @@ func main() {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 				"error": err.Error(),
 			})
-		}
+		 }
+
+		// Convert the timestamp from int64 to time.Time
+		articleTime := time.Unix(article.Timestamp, 0)
 
 		// Generate UUID automatically
-		article.ID = gocql.TimeUUID()
+		article.ArtifactID = gocql.TimeUUID()
 
 		// Check if checksum already exists
 		var existingID gocql.UUID
 		if err := session.Query(`
-			SELECT object_id FROM checksum_index WHERE checksum = ?`,
+			SELECT artifact_id FROM checksum_index WHERE checksum = ?`,
 			article.Checksum).Scan(&existingID); err == nil {
 			return c.Status(fiber.StatusConflict).JSON(fiber.Map{
 				"error": "The news article already exists.",
 			})
 		}
 
-		if err := session.Query(`
-			INSERT INTO news_article (id, title, description, url, published, published_unix, author, categories, source, checksum)
-			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-			article.ID, article.Title, article.Description, article.URL, article.Published, article.PublishedUnix, article.Author, article.Categories, article.Source, article.Checksum).Exec(); err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"error": err.Error(),
-			})
-		}
-
-		// Insert into checksum_index table
-		if err := session.Query(`
-			INSERT INTO checksum_index (checksum, object_id)
-			VALUES (?, ?)`,
-			article.Checksum, article.ID).Exec(); err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"error": err.Error(),
-			})
-		}
-
 		// Convert article to JSON
-		articleJSON, err := json.Marshal(article)
+		articleData, err := json.Marshal(article)
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"error": err.Error(),
 			})
 		}
 
+		if err := session.Query(`
+			INSERT INTO collection_store (artifact_id, source_type, source_id, checksum, timestamp, data)
+			VALUES (?, 'rss', ?, ?, ?, ?)`,
+			article.ArtifactID, article.SourceID, article.Checksum, articleTime, articleData).Exec(); err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": err.Error(),
+			})
+		}
+
 		// Publish the created article to the Redis channel
-		if err := rdb.Publish(context.Background(), "drone-status", articleJSON).Err(); err != nil {
+		if err := rdb.Publish(context.Background(), "drone-status", articleData).Err(); err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"error": err.Error(),
 			})

@@ -1,6 +1,7 @@
 'use client'
 import Form from 'next/form'
 import { useState } from 'react'
+import { createRssFeed } from './actions';
 
 export default function Page() {
 
@@ -9,12 +10,13 @@ export default function Page() {
   return <div>
     <h1 className="text-4xl font-bold">RSS</h1>
     <div className="m-4"></div>
-    <Form action="/collect/rss">
+    <Form action={createRssFeed}>
       <fieldset className="bg-base-100 border border-base-300 p-4 rounded-box">
         <input
           type="text"
           className="input w-full"
           placeholder='Title'
+          name="title"
         />
       </fieldset>
       <fieldset className="bg-base-100 border border-base-300 p-4 rounded-box">
@@ -27,7 +29,7 @@ export default function Page() {
             className="input validator w-full"
             required={ea.id === 1}
             placeholder="URL"
-            name={'url-' + ea.id}
+            name="urls[]"
             pattern="^(https?://)?([a-zA-Z0-9]([a-zA-Z0-9-].*[a-zA-Z0-9])?.)+[a-zA-Z].*$"
             title="Must be valid URL"
           />

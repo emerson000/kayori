@@ -1,13 +1,13 @@
 package models
 
 type NewsArticle struct {
-	Title         string   `json:"title"`
-	Description   string   `json:"description"`
-	Url           string   `json:"url"`
-	Published     string   `json:"published"`
-	PublishedUnix string   `json:"published_unix"`
-	Author        string   `json:"author"`
-	Categories    []string `json:"categories"`
-	Source        string   `json:"source"`
-	Checksum      string   `json:"checksum"`
+	Title         string     `json:"title"`
+	Description   string     `json:"description"`
+	URL           string     `json:"url"`
+	Published     string     `json:"published"`
+	Timestamp     int64      `json:"timestamp"`
+	Author        string     `json:"author"`
+	Categories    []string   `json:"categories"`
+	SourceID      string     `json:"source_id"`
+	Checksum      string     `json:"checksum"`
 }
