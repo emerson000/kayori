@@ -12,7 +12,7 @@ import (
 )
 
 func calculateChecksum(article models.NewsArticle) string {
-	data := article.Title + article.Url + article.Description + article.Author + article.Published + article.Source
+	data := article.Title + article.URL + article.Description + article.Author + article.Published + article.SourceID
 	if article.Categories != nil {
 		for _, category := range article.Categories {
 			data += category

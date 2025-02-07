@@ -11,6 +11,7 @@ import (
 	"github.com/gofiber/contrib/websocket"
 	"github.com/gofiber/fiber/v2"
 	"github.com/redis/go-redis/v9"
+	"github.com/segmentio/kafka-go"
 )
 
 func main() {
@@ -35,29 +36,74 @@ func main() {
 	defer pubsub.Close()
 
 	app.Get("/api/users", func(c *fiber.Ctx) error {
+
+		if err := rdb.Publish(context.Background(), "drone-status", "it worked").Err(); err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": err.Error(),
+			})
+		}
+
+		return c.SendString("Hello, world")
+	})
+	// Kafka writer
+	kafkaWriter := kafka.NewWriter(kafka.WriterConfig{
+		Brokers: []string{"kafka:29092"},
+		Topic:   "drone-dispatch",
+	})
+	defer kafkaWriter.Close()
+
+	app.Post("/api/task", func(c *fiber.Ctx) error {
+		type Job struct {
+			ID      string          `json:"id"`
+			Service string          `json:"service"`
+			Task    json.RawMessage `json:"task"`
+		}
+		var job Job
+		if err := c.BodyParser(&job); err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": err.Error(),
+			})
+		}
+		jobData, err := json.Marshal(job)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": err.Error(),
+			})
+		}
+		err = kafkaWriter.WriteMessages(context.Background(),
+			kafka.Message{
+				Value: jobData,
+			},
+		)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": err.Error(),
+			})
+		}
+
+		return c.SendString("Job published to Kafka")
+	})
+	app.Post("/api/rss", func(c *fiber.Ctx) error {
+		type RssJob struct {
+			Title string   `json:"title"`
+			Urls  []string `json:"urls"`
+		}
+
 		return c.SendString("Hello, world")
 	})
 
-	app.Post("/api/rss", func (c *fiber.Ctx) error {
-		type RssJob struct {
-			Title string `json:"title"`
-			Urls []string `json:"urls"`
-		}
-		return c.SendString("Hello, world")
-	})
-	
 	app.Post("/api/news_article", func(c *fiber.Ctx) error {
 		type NewsArticle struct {
-			ArtifactID    gocql.UUID `json:"artifact_id"`
-			Title         string     `json:"title"`
-			Description   string     `json:"description"`
-			URL           string     `json:"url"`
-			Published     string     `json:"published"`
-			Timestamp     int64      `json:"timestamp"`
-			Author        string     `json:"author"`
-			Categories    []string   `json:"categories"`
-			SourceID      string     `json:"source_id"`
-			Checksum      string     `json:"checksum"`
+			ArtifactID  gocql.UUID `json:"artifact_id"`
+			Title       string     `json:"title"`
+			Description string     `json:"description"`
+			URL         string     `json:"url"`
+			Published   string     `json:"published"`
+			Timestamp   int64      `json:"timestamp"`
+			Author      string     `json:"author"`
+			Categories  []string   `json:"categories"`
+			SourceID    string     `json:"source_id"`
+			Checksum    string     `json:"checksum"`
 		}
 
 		var article NewsArticle
@@ -65,7 +111,7 @@ func main() {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 				"error": err.Error(),
 			})
-		 }
+		}
 
 		// Convert the timestamp from int64 to time.Time
 		articleTime := time.Unix(article.Timestamp, 0)
@@ -95,6 +141,16 @@ func main() {
 			INSERT INTO collection_store (artifact_id, source_type, source_id, checksum, timestamp, data)
 			VALUES (?, 'rss', ?, ?, ?, ?)`,
 			article.ArtifactID, article.SourceID, article.Checksum, articleTime, articleData).Exec(); err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": err.Error(),
+			})
+		}
+
+		// Insert checksum into checksum_index table
+		if err := session.Query(`
+			INSERT INTO checksum_index (checksum, artifact_id)
+			VALUES (?, ?)`,
+			article.Checksum, article.ArtifactID).Exec(); err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"error": err.Error(),
 			})
