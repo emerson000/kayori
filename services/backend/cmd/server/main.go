@@ -176,17 +176,27 @@ func main() {
 	app.Get("/api/ws", websocket.New(func(c *websocket.Conn) {
 		var writeMutex sync.Mutex
 
-		// Listen for messages from Redis and send them to the websocket
+		// Channel to queue messages to be written to the websocket
+		writeQueue := make(chan []byte, 10)
+
+		// Goroutine to handle all writes to the websocket
 		go func() {
-			ch := pubsub.Channel()
-			for msg := range ch {
+			for msg := range writeQueue {
 				writeMutex.Lock()
-				if err := c.WriteMessage(websocket.TextMessage, []byte(msg.Payload)); err != nil {
+				if err := c.WriteMessage(websocket.TextMessage, msg); err != nil {
 					log.Println("write:", err)
 					writeMutex.Unlock()
 					break
 				}
 				writeMutex.Unlock()
+			}
+		}()
+
+		// Listen for messages from Redis and send them to the writeQueue
+		go func() {
+			ch := pubsub.Channel()
+			for msg := range ch {
+				writeQueue <- []byte(msg.Payload)
 			}
 		}()
 
