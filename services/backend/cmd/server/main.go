@@ -166,6 +166,11 @@ func main() {
 		return c.Status(fiber.StatusCreated).JSON(article)
 	})
 
+	var (
+		connections = make(map[*websocket.Conn]chan []byte)
+		connMutex   sync.Mutex
+	)
+
 	app.Get("/api/ws", func(c *fiber.Ctx) error {
 		if websocket.IsWebSocketUpgrade(c) {
 			c.Locals("allowed", true)
@@ -174,15 +179,30 @@ func main() {
 		return fiber.ErrUpgradeRequired
 	})
 	app.Get("/api/ws", websocket.New(func(c *websocket.Conn) {
-		var writeMutex sync.Mutex
-
-		// Channel to queue messages to be written to the websocket
 		writeQueue := make(chan []byte, 10)
+
+		connMutex.Lock()
+		connections[c] = writeQueue
+		connMutex.Unlock()
+
+		defer func() {
+			connMutex.Lock()
+			delete(connections, c)
+			connMutex.Unlock()
+			c.Close()
+		}()
+
+		var writeMutex sync.Mutex
 
 		// Goroutine to handle all writes to the websocket
 		go func() {
 			for msg := range writeQueue {
 				writeMutex.Lock()
+				if c == nil {
+					log.Println("write: nil *Conn")
+					writeMutex.Unlock()
+					break
+				}
 				if err := c.WriteMessage(websocket.TextMessage, msg); err != nil {
 					log.Println("write:", err)
 					writeMutex.Unlock()
@@ -192,11 +212,19 @@ func main() {
 			}
 		}()
 
-		// Listen for messages from Redis and send them to the writeQueue
+		// Listen for messages from Redis and broadcast them to all connections
 		go func() {
 			ch := pubsub.Channel()
 			for msg := range ch {
-				writeQueue <- []byte(msg.Payload)
+				connMutex.Lock()
+				for conn, queue := range connections {
+					select {
+					case queue <- []byte(msg.Payload):
+					default:
+						log.Printf("dropping message for connection: %v", conn)
+					}
+				}
+				connMutex.Unlock()
 			}
 		}()
 
@@ -213,6 +241,11 @@ func main() {
 			log.Printf("recv: %s", msg)
 
 			writeMutex.Lock()
+			if c == nil {
+				log.Println("write: nil *Conn")
+				writeMutex.Unlock()
+				break
+			}
 			if err = c.WriteMessage(mt, msg); err != nil {
 				log.Println("write:", err)
 				writeMutex.Unlock()

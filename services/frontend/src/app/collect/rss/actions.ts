@@ -6,7 +6,6 @@ import { postTask } from "../../../utils/shared";
 export async function createRssFeed(formData: FormData) {
     const title = formData.get('title') as string;
     const urls = formData.getAll('urls[]') as string[];
-    await postTask('rss', title, { urls });
-
-    redirect('/collect/rss');
+    const jobId = await postTask('rss', title, { urls });
+    redirect(`/collect/${jobId}`);
 }
