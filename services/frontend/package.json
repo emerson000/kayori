@@ -1,7 +1,6 @@
 {
   "name": "kayori-frontend",
   "version": "1.0.0",
-  "main": "index.js",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -24,5 +23,8 @@
     "@types/react": "19.0.8",
     "daisyui": "^5.0.0-beta.6",
     "typescript": "5.7.3"
+  },
+  "optionalDependencies": {
+    "@tailwindcss/oxide-linux-arm64-gnu": "^4.0.1"
   }
 }
