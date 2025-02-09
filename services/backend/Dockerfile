@@ -18,13 +18,13 @@ WORKDIR /root/
 
 COPY --from=builder /app/server .
 
-COPY entrypoint.sh .
+COPY entrypoint.sh /root/entrypoint.sh
 
-RUN chmod +x entrypoint.sh
+RUN chmod +x /root/entrypoint.sh
 
 COPY redis.conf /etc/redis.conf
 
 EXPOSE 3001
 EXPOSE 6379
 
-ENTRYPOINT [ "./entrypoint.sh" ]
+ENTRYPOINT [ "/root/entrypoint.sh" ]

@@ -15,8 +15,8 @@ WORKDIR /root/
 
 COPY --from=builder /app/drone .
 
-COPY entrypoint.sh .
+COPY ./entrypoint.sh .
 
 RUN chmod +x entrypoint.sh
 
-ENTRYPOINT [ "./entrypoint.sh" ]
+ENTRYPOINT [ "/root/entrypoint.sh" ]
