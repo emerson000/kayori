@@ -64,7 +64,7 @@ func processMessage(value []byte) {
 	}
 	switch msg.Service {
 	case RssService:
-		rss.ProcessTask(msg.Task.(*rss.Task), postJSON)
+		rss.ProcessTask(msg.Id, msg.Task.(*rss.Task), postJSON)
 	}
 
 	log.Printf("Processed job: %+v", msg.Service)

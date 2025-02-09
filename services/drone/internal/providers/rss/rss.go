@@ -26,7 +26,7 @@ type Task struct {
 	Urls []string `json:"urls"`
 }
 
-func ProcessTask(task *Task, postJSON func(url string, data interface{}) error) {
+func ProcessTask(jobId string, task *Task, postJSON func(url string, data interface{}) error) {
 	processURL := func(url string) {
 		log.Printf("RSS URL: %+v", url)
 		fp := gofeed.NewParser()
@@ -53,7 +53,7 @@ func ProcessTask(task *Task, postJSON func(url string, data interface{}) error) 
 				}
 				if item.Published != "" {
 					if item.PublishedParsed != nil {
-						newsArticle.Timestamp = item.PublishedParsed.Unix()
+						newsArticle.Timestamp = item.PublishedParsed.UnixNano() / 1_000_000
 						newsArticle.Published = item.PublishedParsed.Format(time.RFC3339)
 					}
 				}
@@ -61,6 +61,7 @@ func ProcessTask(task *Task, postJSON func(url string, data interface{}) error) 
 					newsArticle.Categories = item.Categories
 				}
 				newsArticle.SourceID = url
+				newsArticle.JobId = jobId
 				log.Printf("Source ID: %v", newsArticle.SourceID)
 				newsArticle.Checksum = calculateChecksum(newsArticle)
 				// Publish message to Redis topic

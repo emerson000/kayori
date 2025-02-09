@@ -9,7 +9,7 @@ export async function postTask(service: string, title: string, task: object): Pr
             'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-            id: generateUUID(),
+            id: id,
             service: service,
             task: task
         })

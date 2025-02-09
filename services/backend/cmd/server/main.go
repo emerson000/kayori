@@ -12,6 +12,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/redis/go-redis/v9"
 	"github.com/segmentio/kafka-go"
+	"kayori.io/backend/models"
 )
 
 func main() {
@@ -83,6 +84,65 @@ func main() {
 
 		return c.SendString("Job published to Kafka")
 	})
+
+	app.Get("/api/jobs/:id/artifacts", func(c *fiber.Ctx) error {
+		id := c.Params("id")
+
+		var artifactIDs []struct {
+			ID        gocql.UUID
+			Timestamp int64
+		}
+		iter := session.Query(`
+			SELECT artifact_id, timestamp FROM collection_job_lookup WHERE job_id = ?`,
+			id).Iter()
+		var artifact struct {
+			ID        gocql.UUID
+			Timestamp int64
+		}
+		for iter.Scan(&artifact.ID, &artifact.Timestamp) {
+			artifact.Timestamp *= 1000
+			artifactIDs = append(artifactIDs, artifact)
+		}
+		if err := iter.Close(); err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": err.Error(),
+			})
+		}
+
+		var articles []models.NewsArticle
+		for _, artifact := range artifactIDs {
+			var articleData []byte
+			var sourceType, sourceID string
+			if err := session.Query(`
+				SELECT source_type, source_id FROM collection_lookup WHERE artifact_id = ?`,
+				artifact.ID).Scan(&sourceType, &sourceID); err != nil {
+				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+					"error": err.Error(),
+				})
+			}
+			log.Printf("Source Type: %v", sourceType)
+			log.Printf("Source ID: %v", sourceID)
+			log.Printf("Timestamp: %v", artifact.Timestamp)
+			log.Printf("Artifact ID: %v", artifact.ID)
+			if err := session.Query(`
+				SELECT data FROM collection_store WHERE source_type = ? AND source_id = ? AND timestamp = ? AND artifact_id = ?`,
+				sourceType, sourceID, artifact.Timestamp, artifact.ID).Scan(&articleData); err != nil {
+				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+					"error": err.Error(),
+				})
+			}
+			var article models.NewsArticle
+			if err := json.Unmarshal(articleData, &article); err != nil {
+				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+					"error": err.Error(),
+				})
+			}
+			articles = append(articles, article)
+		}
+
+		return c.JSON(articles)
+	})
+
 	app.Post("/api/rss", func(c *fiber.Ctx) error {
 		type RssJob struct {
 			Title string   `json:"title"`
@@ -93,20 +153,7 @@ func main() {
 	})
 
 	app.Post("/api/news_article", func(c *fiber.Ctx) error {
-		type NewsArticle struct {
-			ArtifactID  gocql.UUID `json:"artifact_id"`
-			Title       string     `json:"title"`
-			Description string     `json:"description"`
-			URL         string     `json:"url"`
-			Published   string     `json:"published"`
-			Timestamp   int64      `json:"timestamp"`
-			Author      string     `json:"author"`
-			Categories  []string   `json:"categories"`
-			SourceID    string     `json:"source_id"`
-			Checksum    string     `json:"checksum"`
-		}
-
-		var article NewsArticle
+		var article models.NewsArticle // Use the shared model
 		if err := c.BodyParser(&article); err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 				"error": err.Error(),
@@ -151,6 +198,26 @@ func main() {
 			INSERT INTO checksum_index (checksum, artifact_id)
 			VALUES (?, ?)`,
 			article.Checksum, article.ArtifactID).Exec(); err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": err.Error(),
+			})
+		}
+
+		// Insert job ID into collection_job_lookup table
+		if err := session.Query(`
+			INSERT INTO collection_job_lookup (artifact_id, job_id, timestamp)
+			VALUES (?, ?, ?)`,
+			article.ArtifactID, article.JobId, article.Timestamp).Exec(); err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": err.Error(),
+			})
+		}
+
+		// Insert artifact_id, source_type, and source_id into collection_lookup table
+		if err := session.Query(`
+			INSERT INTO collection_lookup (artifact_id, source_type, source_id)
+			VALUES (?, 'rss', ?)`,
+			article.ArtifactID, article.SourceID).Exec(); err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"error": err.Error(),
 			})
