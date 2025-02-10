@@ -1,0 +1,18 @@
+import { Job, IJob } from '../models/job';
+import { getApiHostname } from '../utils/shared';
+const API_URL = getApiHostname() + '/api/jobs';
+
+export const getJobs = async () => {
+    try {
+        const response = await fetch(API_URL);
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        const data = await response.json();
+        const jobs: IJob[] = data.map((job: any) => new Job(job));
+        return jobs;
+    } catch (error) {
+        console.error('Error fetching jobs:', error);
+        throw error;
+    }
+};

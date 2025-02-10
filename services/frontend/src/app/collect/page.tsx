@@ -1,6 +1,9 @@
 import Link from "next/link";
+import { getJobs } from "../../services/jobService";
+import { IJob } from "../../models/job";
 
-export default function Page() {
+export default async function Page() {
+    const jobs: IJob[] = await getJobs();
     return <div>
         <div className="overflow-x-auto">
             <ul className="menu menu-horizontal bg-base-200 float-right">
@@ -9,21 +12,21 @@ export default function Page() {
             <table className="table">
                 <thead>
                     <tr>
-                        <th>Ordered</th>
                         <th>Title</th>
-                        <th>Case</th>
                         <th>Status</th>
-                        <th>Source</th>
+                        <th>Service</th>
+                        <th></th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr>
-                        <td>02/04/25 13:00</td>
-                        <td>General news collection</td>
-                        <td>Operation PAPI</td>
-                        <td><div className="badge badge-info">In Progress</div></td>
-                        <td>RSS</td>
-                    </tr>
+                    {jobs.map(job => (
+                        <tr key={job.id}>
+                            <td>{job.title}</td>
+                            <td><div className={`badge badge-info`}>In Progress</div></td>
+                            <td>{job.service}</td>
+                            <td><Link className="btn" href={`/collect/${job.id}`}>View</Link></td>
+                        </tr>
+                    ))}
                 </tbody>
             </table>
         </div>

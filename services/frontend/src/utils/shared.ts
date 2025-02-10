@@ -10,6 +10,7 @@ export async function postTask(service: string, title: string, task: object): Pr
         },
         body: JSON.stringify({
             id: id,
+            title: title,
             service: service,
             task: task
         })
