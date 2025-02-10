@@ -197,6 +197,6 @@ func RegisterRoutes(app *fiber.App, session *gocql.Session, rdb *redis.Client, k
 		return c.Status(fiber.StatusCreated).JSON(article)
 	})
 
-	// Move WebSocket route to a separate controller
 	app.Get("/api/ws", controllers.WebSocketHandler(pubsub))
+	app.Get("/api/ws", controllers.WebSocketConnection(pubsub))
 }
