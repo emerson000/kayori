@@ -21,7 +21,7 @@ func main() {
 
 	// Connect to Cassandra
 	cluster := gocql.NewCluster("cassandra")
-	cluster.Keyspace = "kayori_drone_output"
+	cluster.Keyspace = "kayori"
 	session, err := cluster.CreateSession()
 	if err != nil {
 		log.Fatalf("unable to connect to cassandra: %v", err)

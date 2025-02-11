@@ -12,7 +12,7 @@ import (
 )
 
 func calculateChecksum(article models.NewsArticle) string {
-	data := article.Title + article.URL + article.Description + article.Author + article.Published + article.SourceID
+	data := article.Title + article.URL + article.Description + article.Author + article.Published + article.ServiceID
 	if article.Categories != nil {
 		for _, category := range article.Categories {
 			data += category
@@ -33,7 +33,7 @@ func ProcessTask(jobId string, task *Task, postJSON func(url string, data interf
 		feed, err := fp.ParseURL(url)
 
 		if err != nil {
-			log.Printf("Error parsing feed: %v", err)
+			log.Fatalf("Error parsing feed: %v", err)
 			return
 		}
 
@@ -60,14 +60,14 @@ func ProcessTask(jobId string, task *Task, postJSON func(url string, data interf
 				if item.Categories != nil {
 					newsArticle.Categories = item.Categories
 				}
-				newsArticle.SourceID = url
+				newsArticle.ServiceID = url
 				newsArticle.JobId = jobId
-				log.Printf("Source ID: %v", newsArticle.SourceID)
+				log.Printf("Service ID: %v", newsArticle.ServiceID)
 				newsArticle.Checksum = calculateChecksum(newsArticle)
 				// Publish message to Redis topic
 				err = postJSON("http://backend:3001/api/news_article", newsArticle)
 				if err != nil {
-					log.Printf("Error publishing to backend API: %v", err)
+					log.Fatalf("Error publishing to backend API: %v", err)
 					return
 				}
 				log.Printf("Found news article: %v", item.Title)

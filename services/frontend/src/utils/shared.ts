@@ -1,7 +1,7 @@
 import { v7 as generateUUID } from 'uuid';
 
 export async function postTask(service: string, title: string, task: object): Promise<string> {
-    const path = getApiHostname() + '/api/task';
+    const path = getApiHostname() + '/api/jobs';
     const id = generateUUID();
     await fetch(path, {
         method: 'POST',

@@ -8,7 +8,7 @@ type NewsArticle struct {
 	Timestamp   int64    `json:"timestamp"`
 	Author      string   `json:"author"`
 	Categories  []string `json:"categories"`
-	SourceID    string   `json:"source_id"`
+	ServiceID   string   `json:"service_id"`
 	Checksum    string   `json:"checksum"`
 	JobId       string   `json:"job_id"`
 }
