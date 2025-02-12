@@ -179,6 +179,25 @@ func RegisterRoutes(app *fiber.App, session *gocql.Session, rdb *redis.Client, k
 		return c.Status(fiber.StatusCreated).JSON(article)
 	})
 
+	app.Get("/api/entities/news_articles", func(c *fiber.Ctx) error {
+		placeholder := []models.NewsArticle{
+			{
+				ArtifactID:  gocql.UUIDFromTime(time.Now()),
+				Title:       "7.6-magnitude earthquake shakes Caribbean islands",
+				Description: "<img src='https://i.cbc.ca/1.7454593.1739068555!/fileImage/httpImage/image.jpg_gen/derivatives/16x9_620/earthquake-map-cayman-islands.jpg' alt='A digital map shows countries and islands in the Caribbean.' width='620' height='349' title=''/><p>A magnitude-7.6 earthquake shook the Caribbean Sea south of the Cayman Islands Saturday, according to the U.S. Geological Survey. Several islands and countries urged people near the coastline to move inland but authorities in most places later lifted the tsunami alerts.</p>",
+				URL:         "https://www.cbc.ca/news/world/earthquake-caribbean-islands-1.7454589?cmp=rss",
+				Published:   "2025-02-08T21:52:10Z",
+				Timestamp:   1739051530000,
+				Author:      "",
+				Categories:  []string{"News/World"},
+				ServiceID:   "https://www.cbc.ca/webfeed/rss/rss-world",
+				Checksum:    "c79c1bc7ea60a4cadaa4f8b99441eefe0da0d6272e609bb9bea91daf5f321dce",
+				JobId:       "0194f26f-ec41-7007-94c7-397ae413c91b",
+			},
+		}
+		return c.JSON(placeholder)
+	})
+
 	app.Get("/api/ws", controllers.WebSocketHandler(pubsub))
 	app.Get("/api/ws", controllers.WebSocketConnection(pubsub))
 }
