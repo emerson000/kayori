@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log"
+	"time"
 
 	"github.com/gocql/gocql"
 	"github.com/gofiber/fiber/v2"
@@ -22,9 +23,15 @@ func main() {
 	// Connect to Cassandra
 	cluster := gocql.NewCluster("cassandra")
 	cluster.Keyspace = "kayori"
-	session, err := cluster.CreateSession()
-	if err != nil {
-		log.Fatalf("unable to connect to cassandra: %v", err)
+	var session *gocql.Session
+	var err error
+	for {
+		session, err = cluster.CreateSession()
+		if err == nil {
+			break
+		}
+		log.Printf("unable to connect to cassandra: %v, retrying in 10 seconds...", err)
+		time.Sleep(10 * time.Second)
 	}
 	defer session.Close()
 
