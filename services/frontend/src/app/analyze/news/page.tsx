@@ -6,7 +6,7 @@ export default async function Page() {
     return (
         <div>
             <h1 className="text-2xl font-bold">News</h1>
-            {articles.map((article, index) => <MessageCard message={article} key={index} />)}
+            {articles.map((article, index) => <MessageCard message={article} key={index} />)} 
         </div>
     );
 }
