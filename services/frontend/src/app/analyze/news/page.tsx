@@ -1,8 +1,12 @@
 import MessageCard from "../../../components/MessageCard";
 import { getNews } from "../../../services/newsService";
 
-export default async function Page() {
+export async function getServiceSideProps() {
     const articles = await getNews();
+    return { props: { articles }};
+}
+
+export default async function Page({ articles }) {
     return (
         <div>
             <h1 className="text-2xl font-bold">News</h1>
