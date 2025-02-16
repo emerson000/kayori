@@ -54,6 +54,22 @@ func (m *Model) Read(ctx context.Context, db *mongo.Database, collectionName str
 	return nil
 }
 
+func (m *Model) ReadAll(ctx context.Context, db *mongo.Database, collectionName string, filter interface{}, results interface{}) error {
+	collection := db.Collection(collectionName)
+
+	cursor, err := collection.Find(ctx, filter)
+	if err != nil {
+		return err
+	}
+	defer cursor.Close(ctx)
+
+	if err = cursor.All(ctx, results); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (m *Model) Update(ctx context.Context, db *mongo.Database, collectionName string, filter interface{}, update interface{}) error {
 	collection := db.Collection(collectionName)
 

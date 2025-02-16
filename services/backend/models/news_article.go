@@ -1,21 +1,24 @@
 package models
 
 import (
-	"github.com/gocql/gocql"
+	"time"
+
+	"go.mongodb.org/mongo-driver/v2/bson"
 	"kayori.io/backend/data/mongorm"
 )
 
 type NewsArticle struct {
-	mongorm.Model
-	ArtifactID  gocql.UUID `json:"artifact_id"`
-	Title       string     `json:"title"`
-	Description string     `json:"description"`
-	URL         string     `json:"url"`
-	Published   string     `json:"published"`
-	Timestamp   int64      `json:"timestamp"`
-	Author      string     `json:"author"`
-	Categories  []string   `json:"categories"`
-	ServiceID   string     `json:"service_id"`
-	Checksum    string     `json:"checksum"`
-	JobId       string     `json:"job_id"`
+	mongorm.Model `bson:",inline"`
+	EntityType    string        `bson:"entity_type" json:"entity_type"`
+	Title         string        `bson:"title" json:"title"`
+	Description   string        `bson:"description" json:"description"`
+	URL           string        `bson:"url" json:"url"`
+	Published     string        `bson:"published" json:"published"`
+	Timestamp     time.Time     `bson:"timestamp" json:"timestamp"`
+	Author        string        `bson:"author" json:"author"`
+	Categories    []string      `bson:"categories" json:"categories"`
+	Service       string        `bson:"service" json:"service"`
+	ServiceID     string        `bson:"service_id" json:"service_id"`
+	Checksum      string        `bson:"checksum" json:"checksum"`
+	JobId         bson.ObjectID `bson:"job_id" json:"job_id"`
 }
