@@ -1,10 +1,13 @@
 package models
 
-import "encoding/json"
+import (
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"kayori.io/backend/data/mongorm"
+)
 
 type Job struct {
-	ID      string          `json:"id"`
-	Title   string          `json:"title"`
-	Service string          `json:"service"`
-	Task    json.RawMessage `json:"task"`
+	mongorm.Model `bson:",inline"`
+	Title         string `bson:"title" json:"title"`
+	Service       string `bson:"service" json:"service"`
+	Task          bson.D `bson:"task" json:"task"`
 }

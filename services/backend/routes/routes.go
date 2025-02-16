@@ -1,19 +1,23 @@
 package routes
 
 import (
+	// "context"
+	// "encoding/json"
 	"context"
-	"encoding/json"
+	"log"
 	"time"
 
 	"github.com/gocql/gocql"
 	"github.com/gofiber/fiber/v2"
 	"github.com/redis/go-redis/v9"
 	"github.com/segmentio/kafka-go"
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo"
 	"kayori.io/backend/controllers"
 	"kayori.io/backend/models"
 )
 
-func RegisterRoutes(app *fiber.App, session *gocql.Session, rdb *redis.Client, kafkaWriter *kafka.Writer, pubsub *redis.PubSub) {
+func RegisterRoutes(app *fiber.App, db *mongo.Database, rdb *redis.Client, kafkaWriter *kafka.Writer, pubsub *redis.PubSub) {
 	app.Post("/api/jobs", func(c *fiber.Ctx) error {
 		var job models.Job
 		if err := c.BodyParser(&job); err != nil {
@@ -21,162 +25,205 @@ func RegisterRoutes(app *fiber.App, session *gocql.Session, rdb *redis.Client, k
 				"error": err.Error(),
 			})
 		}
-		jobData, err := json.Marshal(job)
-		if err != nil {
+		if err := job.Create(context.Background(), db, "jobs", &job); err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"error": err.Error(),
 			})
 		}
-		if err := session.Query(`
-			INSERT INTO jobs (job_id, title, task, service)
-			VALUES (?, ?, ?, ?)`,
-			job.ID, job.Title, job.Task, job.Service).Exec(); err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"error": err.Error(),
-			})
-		}
-		err = kafkaWriter.WriteMessages(context.Background(),
-			kafka.Message{
-				Value: jobData,
-			},
-		)
-		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"error": err.Error(),
-			})
-		}
-		return c.JSON(fiber.Map{
-			"message": "Job published to Kafka",
-		})
+		// jobData, err := json.Marshal(job)
+		// if err != nil {
+		// 	return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+		// 		"error": err.Error(),
+		// 	})
+		// }
+
+		// err = kafkaWriter.WriteMessages(context.Background(),
+		// 	kafka.Message{
+		// 		Value: jobData,
+		// 	},
+		// )
+		// if err != nil {
+		// 	return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+		// 		"error": err.Error(),
+		// 	})
+		// }
+		return c.JSON(job)
 	})
 
 	app.Get("/api/jobs", func(c *fiber.Ctx) error {
 		jobs := make([]models.Job, 0)
-		iter := session.Query("SELECT job_id, title, task, service FROM jobs").Iter()
-		var job models.Job
-		for iter.Scan(&job.ID, &job.Title, &job.Task, &job.Service) {
-			jobs = append(jobs, job)
-		}
-		if err := iter.Close(); err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"error": err.Error(),
-			})
-		}
-		return c.JSON(jobs)
-	})
-
-	app.Get("/api/jobs/:id/artifacts", func(c *fiber.Ctx) error {
-		id := c.Params("id")
-		var artifactIDs []struct {
-			ID        gocql.UUID
-			Timestamp int64
-		}
-		iter := session.Query(`
-			SELECT artifact_id, timestamp FROM artifact_job_lookup WHERE job_id = ?`,
-			id).Iter()
-		var artifact struct {
-			ID        gocql.UUID
-			Timestamp int64
-		}
-		for iter.Scan(&artifact.ID, &artifact.Timestamp) {
-			artifact.Timestamp *= 1000
-			artifactIDs = append(artifactIDs, artifact)
-		}
-		if err := iter.Close(); err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"error": err.Error(),
-			})
-		}
-		articles := make([]models.NewsArticle, 0)
-		for _, artifact := range artifactIDs {
-			var articleData []byte
-			var serviceType, serviceID string
-			if err := session.Query(`
-				SELECT service_type, service_id FROM artifact_service_lookup WHERE artifact_id = ?`,
-				artifact.ID).Scan(&serviceType, &serviceID); err != nil {
-				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-					"error": err.Error(),
-				})
-			}
-			if err := session.Query(`
-				SELECT data FROM artifacts WHERE service_type = ? AND service_id = ? AND timestamp = ? AND artifact_id = ?`,
-				serviceType, serviceID, artifact.Timestamp, artifact.ID).Scan(&articleData); err != nil {
-				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-					"error": err.Error(),
-				})
-			}
-			var article models.NewsArticle
-			if err := json.Unmarshal(articleData, &article); err != nil {
-				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-					"error": err.Error(),
-				})
-			}
-			articles = append(articles, article)
-		}
-		return c.JSON(articles)
-	})
-
-	app.Post("/api/news_article", func(c *fiber.Ctx) error {
-		var article models.NewsArticle
-		if err := c.BodyParser(&article); err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"error": err.Error(),
-			})
-		}
-		articleTime := time.Unix(article.Timestamp, 0)
-		article.ArtifactID = gocql.TimeUUID()
-		var existingID gocql.UUID
-		if err := session.Query(`
-			SELECT artifact_id FROM artifact_checksum_lookup WHERE checksum = ?`,
-			article.Checksum).Scan(&existingID); err == nil {
-			return c.Status(fiber.StatusConflict).JSON(fiber.Map{
-				"error": "The news article already exists.",
-			})
-		}
-		articleData, err := json.Marshal(article)
+		collection := db.Collection("jobs")
+		cursor, err := collection.Find(context.Background(), bson.D{})
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"error": err.Error(),
 			})
 		}
-		if err := session.Query(`
-			INSERT INTO artifacts (artifact_id, service_type, service_id, checksum, timestamp, data)
-			VALUES (?, 'rss', ?, ?, ?, ?)`,
-			article.ArtifactID, article.ServiceID, article.Checksum, articleTime, articleData).Exec(); err != nil {
+		defer cursor.Close(context.Background())
+
+		if err := cursor.All(context.Background(), &jobs); err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"error": err.Error(),
 			})
 		}
-		if err := session.Query(`
-			INSERT INTO artifact_checksum_lookup (checksum, artifact_id)
-			VALUES (?, ?)`,
-			article.Checksum, article.ArtifactID).Exec(); err != nil {
+		//iter := session.Query("SELECT job_id, title, task, service FROM jobs").Iter()
+		// var job models.Job
+		// for iter.Scan(&job.ID, &job.Title, &job.Task, &job.Service) {
+		// 	jobs = append(jobs, job)
+		// }
+		// if err := iter.Close(); err != nil {
+		// 	return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+		// 		"error": err.Error(),
+		// 	})
+		// }
+		return c.JSON(jobs)
+	})
+
+	app.Get("/api/jobs/:id", func(c *fiber.Ctx) error {
+		id := c.Params("id")
+		objID, err := bson.ObjectIDFromHex(id)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "Invalid job ID",
+			})
+		}
+		collection := db.Collection("jobs")
+		var result bson.M
+		if err := collection.FindOne(context.TODO(), bson.M{"_id": objID}).Decode(&result); err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"error": err.Error(),
 			})
 		}
-		if err := session.Query(`
-			INSERT INTO artifact_job_lookup (artifact_id, job_id, timestamp)
-			VALUES (?, ?, ?)`,
-			article.ArtifactID, article.JobId, article.Timestamp).Exec(); err != nil {
+		log.Printf("result: %+v\n", result["_id"])
+		var job models.Job
+		log.Printf("job ID: %+v\n", id)
+		if err := job.Read(context.Background(), db, "jobs", bson.M{"_id": objID}, &job); err != nil {
+			if err == mongo.ErrNoDocuments {
+				return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+					"error": "Job not found",
+				})
+			}
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"error": err.Error(),
 			})
 		}
-		if err := session.Query(`
-			INSERT INTO artifact_service_lookup (artifact_id, service_type, service_id)
-			VALUES (?, 'rss', ?)`,
-			article.ArtifactID, article.ServiceID).Exec(); err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"error": err.Error(),
-			})
-		}
-		if err := rdb.Publish(context.Background(), "drone-status", articleData).Err(); err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"error": err.Error(),
-			})
-		}
-		return c.Status(fiber.StatusCreated).JSON(article)
+		return c.JSON(job)
+	})
+
+	app.Get("/api/jobs/:id/artifacts", func(c *fiber.Ctx) error {
+		// id := c.Params("id")
+		// var artifactIDs []struct {
+		// 	ID        gocql.UUID
+		// 	Timestamp int64
+		// }
+		// iter := session.Query(`
+		// 	SELECT artifact_id, timestamp FROM artifact_job_lookup WHERE job_id = ?`,
+		// 	id).Iter()
+		// var artifact struct {
+		// 	ID        gocql.UUID
+		// 	Timestamp int64
+		// }
+		// for iter.Scan(&artifact.ID, &artifact.Timestamp) {
+		// 	artifact.Timestamp *= 1000
+		// 	artifactIDs = append(artifactIDs, artifact)
+		// }
+		// if err := iter.Close(); err != nil {
+		// 	return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+		// 		"error": err.Error(),
+		// 	})
+		// }
+		// articles := make([]models.NewsArticle, 0)
+		// for _, artifact := range artifactIDs {
+		// 	var articleData []byte
+		// 	var serviceType, serviceID string
+		// 	if err := session.Query(`
+		// 		SELECT service_type, service_id FROM artifact_service_lookup WHERE artifact_id = ?`,
+		// 		artifact.ID).Scan(&serviceType, &serviceID); err != nil {
+		// 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+		// 			"error": err.Error(),
+		// 		})
+		// 	}
+		// 	if err := session.Query(`
+		// 		SELECT data FROM artifacts WHERE service_type = ? AND service_id = ? AND timestamp = ? AND artifact_id = ?`,
+		// 		serviceType, serviceID, artifact.Timestamp, artifact.ID).Scan(&articleData); err != nil {
+		// 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+		// 			"error": err.Error(),
+		// 		})
+		// 	}
+		// 	var article models.NewsArticle
+		// 	if err := json.Unmarshal(articleData, &article); err != nil {
+		// 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+		// 			"error": err.Error(),
+		// 		})
+		// 	}
+		// 	articles = append(articles, article)
+		// }
+		// return c.JSON(articles)
+		return c.JSON([]models.NewsArticle{})
+	})
+
+	app.Post("/api/news_article", func(c *fiber.Ctx) error {
+		// var article models.NewsArticle
+		// if err := c.BodyParser(&article); err != nil {
+		// 	return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+		// 		"error": err.Error(),
+		// 	})
+		// }
+		// articleTime := time.Unix(article.Timestamp, 0)
+		// article.ArtifactID = gocql.TimeUUID()
+		// var existingID gocql.UUID
+		// if err := session.Query(`
+		// 	SELECT artifact_id FROM artifact_checksum_lookup WHERE checksum = ?`,
+		// 	article.Checksum).Scan(&existingID); err == nil {
+		// 	return c.Status(fiber.StatusConflict).JSON(fiber.Map{
+		// 		"error": "The news article already exists.",
+		// 	})
+		// }
+		// articleData, err := json.Marshal(article)
+		// if err != nil {
+		// 	return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+		// 		"error": err.Error(),
+		// 	})
+		// }
+		// if err := session.Query(`
+		// 	INSERT INTO artifacts (artifact_id, service_type, service_id, checksum, timestamp, data)
+		// 	VALUES (?, 'rss', ?, ?, ?, ?)`,
+		// 	article.ArtifactID, article.ServiceID, article.Checksum, articleTime, articleData).Exec(); err != nil {
+		// 	return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+		// 		"error": err.Error(),
+		// 	})
+		// }
+		// if err := session.Query(`
+		// 	INSERT INTO artifact_checksum_lookup (checksum, artifact_id)
+		// 	VALUES (?, ?)`,
+		// 	article.Checksum, article.ArtifactID).Exec(); err != nil {
+		// 	return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+		// 		"error": err.Error(),
+		// 	})
+		// }
+		// if err := session.Query(`
+		// 	INSERT INTO artifact_job_lookup (artifact_id, job_id, timestamp)
+		// 	VALUES (?, ?, ?)`,
+		// 	article.ArtifactID, article.JobId, article.Timestamp).Exec(); err != nil {
+		// 	return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+		// 		"error": err.Error(),
+		// 	})
+		// }
+		// if err := session.Query(`
+		// 	INSERT INTO artifact_service_lookup (artifact_id, service_type, service_id)
+		// 	VALUES (?, 'rss', ?)`,
+		// 	article.ArtifactID, article.ServiceID).Exec(); err != nil {
+		// 	return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+		// 		"error": err.Error(),
+		// 	})
+		// }
+		// if err := rdb.Publish(context.Background(), "drone-status", articleData).Err(); err != nil {
+		// 	return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+		// 		"error": err.Error(),
+		// 	})
+		// }
+		// return c.Status(fiber.StatusCreated).JSON(article)
+		return c.JSON(fiber.Map{})
 	})
 
 	app.Get("/api/entities/news_articles", func(c *fiber.Ctx) error {

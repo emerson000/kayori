@@ -2,13 +2,11 @@ package main
 
 import (
 	"context"
-	"log"
-	"time"
 
-	"github.com/gocql/gocql"
 	"github.com/gofiber/fiber/v2"
 	"github.com/redis/go-redis/v9"
 	"github.com/segmentio/kafka-go"
+	"kayori.io/backend/data/mongorm"
 	"kayori.io/backend/routes"
 )
 
@@ -20,20 +18,17 @@ func main() {
 		Addr: "localhost:6379",
 	})
 
-	// Connect to Cassandra
-	cluster := gocql.NewCluster("cassandra")
-	cluster.Keyspace = "kayori"
-	var session *gocql.Session
-	var err error
-	for {
-		session, err = cluster.CreateSession()
-		if err == nil {
-			break
-		}
-		log.Printf("unable to connect to cassandra: %v, retrying in 10 seconds...", err)
-		time.Sleep(10 * time.Second)
+	client, err := mongorm.Connect("mongodb://root:kayori@mongo:27017")
+	if err != nil {
+		panic(err)
 	}
-	defer session.Close()
+	defer func() {
+		if err = client.Disconnect(context.Background()); err != nil {
+			panic(err)
+		}
+	}()
+
+	db := client.Database("kayori")
 
 	// Subscribe to the "drone-status" topic
 	pubsub := rdb.Subscribe(context.Background(), "drone-status")
@@ -47,7 +42,7 @@ func main() {
 	defer kafkaWriter.Close()
 
 	// Register routes
-	routes.RegisterRoutes(app, session, rdb, kafkaWriter, pubsub)
+	routes.RegisterRoutes(app, db, rdb, kafkaWriter, pubsub)
 
 	app.Listen(":3001")
 }

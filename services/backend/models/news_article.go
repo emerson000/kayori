@@ -1,8 +1,12 @@
 package models
 
-import "github.com/gocql/gocql"
+import (
+	"github.com/gocql/gocql"
+	"kayori.io/backend/data/mongorm"
+)
 
 type NewsArticle struct {
+	mongorm.Model
 	ArtifactID  gocql.UUID `json:"artifact_id"`
 	Title       string     `json:"title"`
 	Description string     `json:"description"`
