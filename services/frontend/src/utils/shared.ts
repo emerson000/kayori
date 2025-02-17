@@ -1,29 +1,33 @@
-import { v7 as generateUUID } from 'uuid';
+'use server'
 
 export async function postTask(service: string, title: string, task: object): Promise<string> {
-    const path = getApiHostname() + '/api/jobs';
-    const id = generateUUID();
-    await fetch(path, {
+    const path = await getApiHostname() + '/api/jobs';
+    const result = await fetch(path, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-            id: id,
             title: title,
             service: service,
+            status: "pending",
             task: task
         })
     });
-    return id;
+    if (!result.ok) {
+        const errorText = await result.text();
+        throw new Error(errorText);
+    }
+    const resultJson = await result.json();
+    return resultJson.id;
 }
 
 export async function getJobArtifacts(jobId: string): Promise<object> {
-    const path = getApiHostname() + '/api/jobs/'+jobId +'/artifacts';
+    const path = await getApiHostname() + '/api/jobs/'+jobId +'/artifacts';
     const response = await fetch(path);
     return await response.json();
 }
 
-export function getApiHostname() {
+export async function getApiHostname() {
     return process.env.BACKEND_URL || 'http://localhost:3001';
 }

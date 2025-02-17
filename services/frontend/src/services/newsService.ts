@@ -1,6 +1,8 @@
+'use server'
+
 import { NewsArticle, INewsArticle } from '../models/newsArticle';
 import { getApiHostname } from '../utils/shared';
-const API_URL = getApiHostname() + '/api/entities/news_articles';
+const API_URL = await getApiHostname() + '/api/entities/news_articles';
 
 export const getNews = async () => {
     try {

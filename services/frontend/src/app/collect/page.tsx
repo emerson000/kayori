@@ -22,7 +22,11 @@ export default async function Page() {
                     {jobs.map(job => (
                         <tr key={job.id}>
                             <td>{job.title}</td>
-                            <td><div className={`badge badge-info`}>In Progress</div></td>
+                            <td>
+                                <div className={`badge ${job.status === 'pending' ? 'badge-info' : job.status === 'done' ? 'badge-success' : ''}`}>
+                                    {job.status ? job.status.toUpperCase() : 'UNKNOWN'}
+                                </div>
+                            </td>
                             <td>{job.service}</td>
                             <td><Link className="btn" href={`/collect/${job.id}`}>View</Link></td>
                         </tr>

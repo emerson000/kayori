@@ -161,6 +161,15 @@ func RegisterRoutes(app *fiber.App, db *mongo.Database, rdb *redis.Client, kafka
 				"error": err.Error(),
 			})
 		}
+
+		for i := range artifacts {
+			for j := range artifacts[i] {
+				if artifacts[i][j].Key == "_id" {
+					artifacts[i][j].Key = "id"
+				}
+			}
+		}
+
 		return c.JSON(artifacts)
 	})
 

@@ -1,6 +1,8 @@
+'use server'
+
 import { Job, IJob } from '../models/job';
 import { getApiHostname } from '../utils/shared';
-const API_URL = getApiHostname() + '/api/jobs';
+const API_URL = await getApiHostname() + '/api/jobs';
 
 export const getJobs = async () => {
     try {
