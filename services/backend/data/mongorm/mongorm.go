@@ -70,12 +70,21 @@ func (m *Model) ReadAll(ctx context.Context, db *mongo.Database, collectionName 
 	return nil
 }
 
-func (m *Model) Update(ctx context.Context, db *mongo.Database, collectionName string, filter interface{}, update interface{}) error {
+func (m *Model) Update(ctx context.Context, db *mongo.Database, collectionName string, update interface{}) error {
 	collection := db.Collection(collectionName)
 
 	m.UpdatedAt = time.Now()
-
-	_, err := collection.UpdateOne(ctx, filter, update)
+	updateMap, ok := update.(bson.M)
+	if !ok {
+		return fmt.Errorf("update is not of type bson.M")
+	}
+	setMap, ok := updateMap["$set"].(bson.M)
+	if !ok {
+		setMap = bson.M{}
+		updateMap["$set"] = setMap
+	}
+	setMap["updated_at"] = m.UpdatedAt
+	_, err := collection.UpdateOne(ctx, bson.M{"_id": m.ID}, update)
 	if err != nil {
 		return err
 	}

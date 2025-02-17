@@ -9,5 +9,6 @@ type Job struct {
 	mongorm.Model `bson:",inline"`
 	Title         string `bson:"title" json:"title"`
 	Service       string `bson:"service" json:"service"`
+	Status        string `bson:"status" json:"status"`
 	Task          bson.D `bson:"task" json:"task"`
 }

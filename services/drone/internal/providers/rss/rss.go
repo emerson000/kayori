@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"github.com/mmcdole/gofeed"
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"kayori.io/drone/internal/data"
 	"kayori.io/drone/internal/models"
 )
 
@@ -53,7 +55,7 @@ func ProcessTask(jobId string, task *Task, postJSON func(url string, data interf
 				}
 				if item.Published != "" {
 					if item.PublishedParsed != nil {
-						newsArticle.Timestamp = item.PublishedParsed.UnixNano() / 1_000_000
+						newsArticle.Timestamp = *item.PublishedParsed
 						newsArticle.Published = item.PublishedParsed.Format(time.RFC3339)
 					}
 				}
@@ -61,19 +63,36 @@ func ProcessTask(jobId string, task *Task, postJSON func(url string, data interf
 					newsArticle.Categories = item.Categories
 				}
 				newsArticle.ServiceID = url
-				newsArticle.JobId = jobId
-				log.Printf("Service ID: %v", newsArticle.ServiceID)
-				newsArticle.Checksum = calculateChecksum(newsArticle)
-				// Publish message to Redis topic
-				err = postJSON("http://backend:3001/api/news_article", newsArticle)
+				newsArticle.Service = "rss"
+				newsArticle.JobId, err = bson.ObjectIDFromHex(jobId)
 				if err != nil {
-					log.Fatalf("Error publishing to backend API: %v", err)
+					log.Fatalf("Error converting job ID to ObjectID: %v", err)
+					return
+				}
+				newsArticle.Checksum = calculateChecksum(newsArticle)
+				err = postJSON("http://backend:3001/api/entities/news_articles", newsArticle)
+				if err != nil {
+					if err.Error() == "received non-OK response: 409 Conflict" {
+						log.Printf("Article already exists: %v", newsArticle.Title)
+					} else {
+						log.Fatalf("Error publishing to backend API: %v", err)
+					}
 					return
 				}
 				log.Printf("Found news article: %v", item.Title)
 			}(item)
 		}
 		wg.Wait()
+		objId, err := bson.ObjectIDFromHex(jobId)
+		if err != nil {
+			log.Fatalf("Error converting job ID to ObjectID: %v", err)
+			return
+		}
+		err = data.SetJobStatus(objId, "done")
+		if err != nil {
+			log.Fatalf("Error setting job status: %v", err)
+			return
+		}
 		log.Printf("Finished parsing RSS feed: %v", feed.Title)
 	}
 

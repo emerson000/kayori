@@ -29,6 +29,11 @@ func RegisterRoutes(app *fiber.App, db *mongo.Database, rdb *redis.Client, kafka
 				"error": err.Error(),
 			})
 		}
+
+		if job.Status == "" {
+			job.Status = "pending"
+		}
+
 		jobData, err := json.Marshal(job)
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -95,6 +100,42 @@ func RegisterRoutes(app *fiber.App, db *mongo.Database, rdb *redis.Client, kafka
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"error": err.Error(),
 			})
+		}
+		return c.JSON(job)
+	})
+
+	app.Put("/api/jobs/:id", func(c *fiber.Ctx) error {
+		var job models.Job
+		if err := c.BodyParser(&job); err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": err.Error(),
+			})
+		}
+		id := c.Params("id")
+		objID, err := bson.ObjectIDFromHex(id)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "Invalid job ID",
+			})
+		}
+		job.ID = objID
+		updateStatement := bson.M{
+			"$set": bson.M{},
+		}
+		if job.Title != "" {
+			updateStatement["$set"].(bson.M)["title"] = job.Title
+		}
+		if job.Status != "" {
+			updateStatement["$set"].(bson.M)["status"] = job.Status
+		}
+		if err := job.Update(context.Background(), db, "jobs", updateStatement); err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": err.Error(),
+			})
+		}
+		err = job.Read(context.Background(), db, "jobs", bson.M{"_id": job.ID}, &job)
+		if err != nil {
+			return err
 		}
 		return c.JSON(job)
 	})
