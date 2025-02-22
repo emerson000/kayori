@@ -1,18 +1,22 @@
 'use server'
 
-export async function postTask(service: string, title: string, task: object): Promise<string> {
+export async function postTask(service: string, title: string, task: object, schedule: object): Promise<string> {
     const path = await getApiHostname() + '/api/jobs';
+    const taskBody = {
+        title: title,
+        service: service,
+        status: "pending",
+        task: task
+    };
+    if (schedule['schedule'] === true) {
+        taskBody['schedule'] = schedule;
+    }
     const result = await fetch(path, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-            title: title,
-            service: service,
-            status: "pending",
-            task: task
-        })
+        body: JSON.stringify(taskBody)
     });
     if (!result.ok) {
         const errorText = await result.text();
@@ -23,7 +27,7 @@ export async function postTask(service: string, title: string, task: object): Pr
 }
 
 export async function getJobArtifacts(jobId: string): Promise<object> {
-    const path = await getApiHostname() + '/api/jobs/'+jobId +'/artifacts';
+    const path = await getApiHostname() + '/api/jobs/' + jobId + '/artifacts';
     const response = await fetch(path);
     return await response.json();
 }

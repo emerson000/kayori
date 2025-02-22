@@ -38,7 +38,6 @@ func (m *Model) Create(ctx context.Context, db *mongo.Database, collectionName s
 		return err
 	}
 
-	log.Println(res.InsertedID)
 	m.ID = res.InsertedID.(bson.ObjectID)
 	return nil
 }

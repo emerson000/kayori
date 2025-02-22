@@ -1,6 +1,8 @@
 package models
 
 import (
+	"time"
+
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"kayori.io/backend/data/mongorm"
 )
@@ -11,4 +13,10 @@ type Job struct {
 	Service       string `bson:"service" json:"service"`
 	Status        string `bson:"status" json:"status"`
 	Task          bson.D `bson:"task" json:"task"`
+	Schedule      *struct {
+		Schedule bool      `bson:"schedule" json:"schedule"`
+		Duration int       `bson:"duration" json:"duration"`
+		Interval string    `bson:"interval" json:"interval"`
+		LastRun  time.Time `bson:"last_run" json:"last_run"`
+	} `bson:"schedule,omitempty" json:"schedule,omitempty"`
 }
