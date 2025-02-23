@@ -2,6 +2,8 @@ import Link from "next/link";
 import { getJobs } from "../../services/jobService";
 import { IJob } from "../../models/job";
 
+export const dynamic = 'force-dynamic'
+
 export default async function Page() {
     const jobs: IJob[] = await getJobs();
     return <div>

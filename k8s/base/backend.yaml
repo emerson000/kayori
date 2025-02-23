@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: kayori-backend
-        image: kayori-backend
+        image: kayori/backend:latest
         imagePullPolicy: Never
         ports:
         - containerPort: 3001

@@ -1,0 +1,104 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kafka
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kafka
+  template:
+    metadata:
+      labels:
+        app: kafka
+    spec:
+      containers:
+      - name: kafka
+        image: confluentinc/cp-kafka:latest
+        ports:
+        - containerPort: 9092
+        - containerPort: 9997
+        env:
+        - name: CLUSTER_ID
+          value: "Ynf7N8PUR6GLybrJW7MriA"
+        - name: KAFKA_NODE_ID
+          value: "1"
+        - name: KAFKA_PROCESS_ROLES
+          value: "broker,controller"
+        - name: KAFKA_LISTENERS
+          value: "PLAINTEXT://kafka:29092,CONTROLLER://kafka:29093,PLAINTEXT_HOST://0.0.0.0:9092"
+        - name: KAFKA_ADVERTISED_LISTENERS
+          value: "PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092"
+        - name: KAFKA_CONTROLLER_QUORUM_VOTERS
+          value: "1@kafka:29093"
+        - name: KAFKA_CONTROLLER_LISTENER_NAMES
+          value: "CONTROLLER"
+        - name: KAFKA_INTER_BROKER_LISTENER_NAME
+          value: "PLAINTEXT"
+        - name: KAFKA_LISTENER_SECURITY_PROTOCOL_MAP
+          value: "CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT"
+        - name: KAFKA_AUTO_CREATE_TOPICS_ENABLE
+          value: "true"
+        - name: KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR
+          value: "1"
+        - name: KAFKA_JMX_PORT
+          value: "9997"
+        - name: KAFKA_JMX_HOSTNAME
+          value: "kafka"
+        volumeMounts:
+        - name: kafka-data
+          mountPath: /var/lib/kafka/data
+      volumes:
+      - name: kafka-data
+        persistentVolumeClaim:
+          claimName: kafka-pvc
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: kafka-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka
+spec:
+  selector:
+    app: kafka
+  ports:
+    - protocol: TCP
+      name: kafka-port
+      port: 9092
+      targetPort: 9092
+    - protocol: TCP
+      name: kafka-jmx-port
+      port: 9997
+      targetPort: 9997
+  clusterIP: None
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: kafka-network-policy
+spec:
+  podSelector:
+    matchLabels:
+      app: kafka
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          network: kayori-network
+    ports:
+    - protocol: TCP
+      port: 9092
+    - protocol: TCP
+      port: 9997

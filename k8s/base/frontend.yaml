@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: kayori-frontend
-        image: kayori-frontend
+        image: kayori/frontend:latest
         imagePullPolicy: Never
         ports:
         - containerPort: 3000

@@ -5,11 +5,19 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
-var hostname = "http://backend:3001"
+var hostname = GetHostname()
+
+func GetHostname() string {
+	if value, exists := os.LookupEnv("BACKEND_HOSTNAME"); exists {
+		return value
+	}
+	return "http://backend:3001"
+}
 
 type JobUpdate struct {
 	Status string `json:"status"`

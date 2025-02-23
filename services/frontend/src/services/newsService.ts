@@ -5,6 +5,9 @@ import { getApiHostname } from '../utils/shared';
 const API_URL = await getApiHostname() + '/api/entities/news_articles';
 
 export const getNews = async () => {
+    if (process.env.SKIP_API_CALL == 'true') {
+        return [];
+    }
     try {
         const response = await fetch(API_URL);
         if (!response.ok) {

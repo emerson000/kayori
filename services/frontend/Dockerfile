@@ -17,7 +17,11 @@ COPY . /app
 # Ensure entrypoint.sh is copied into the container
 COPY entrypoint.sh /app/entrypoint.sh
 
+ENV SKIP_API_CALL=true
+
 RUN npm run build
+
+ENV SKIP_API_CALL=
 
 RUN chmod +x /app/entrypoint.sh
 

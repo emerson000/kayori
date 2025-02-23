@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kayori-drone
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kayori-drone
+  template:
+    metadata:
+      labels:
+        app: kayori-drone
+    spec:
+      containers:
+      - name: kayori-drone
+        image: kayori/drone:latest
+        imagePullPolicy: Never
+        env:
+        - name: KAFKA_BROKER
+          value: "kafka:29092"
+        - name: BACKEND_HOSTNAME
+          value: "http://kayori-backend-service"

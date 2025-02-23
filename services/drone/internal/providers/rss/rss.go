@@ -70,7 +70,7 @@ func ProcessTask(jobId string, task *Task, postJSON func(url string, data interf
 					return
 				}
 				newsArticle.Checksum = calculateChecksum(newsArticle)
-				err = postJSON("http://backend:3001/api/entities/news_articles", newsArticle)
+				err = postJSON(data.GetHostname()+"/api/entities/news_articles", newsArticle)
 				if err != nil {
 					if err.Error() == "received non-OK response: 409 Conflict" {
 						log.Printf("Article already exists: %v", newsArticle.Title)
