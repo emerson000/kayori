@@ -53,10 +53,16 @@ func (m *Model) Read(ctx context.Context, db *mongo.Database, collectionName str
 	return nil
 }
 
-func (m *Model) ReadAll(ctx context.Context, db *mongo.Database, collectionName string, filter interface{}, results interface{}) error {
+func (m *Model) ReadAll(ctx context.Context, db *mongo.Database, collectionName string, filter interface{}, results interface{}, opts *options.FindOptionsBuilder) error {
 	collection := db.Collection(collectionName)
 
-	cursor, err := collection.Find(ctx, filter)
+	var cursor *mongo.Cursor
+	var err error
+	if opts != nil {
+		cursor, err = collection.Find(ctx, filter, opts)
+	} else {
+		cursor, err = collection.Find(ctx, filter)
+	}
 	if err != nil {
 		return err
 	}

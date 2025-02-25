@@ -91,7 +91,7 @@ func startScheduler(db *mongo.Database, kafkaWriter *kafka.Writer) {
 
 func fetchJobs(db *mongo.Database) ([]models.Job, error) {
 	jobs := make([]models.Job, 0)
-	if err := (&models.Job{}).ReadAll(context.Background(), db, "jobs", bson.M{"schedule.schedule": true}, &jobs); err != nil {
+	if err := (&models.Job{}).ReadAll(context.Background(), db, "jobs", bson.M{"schedule.schedule": true}, &jobs, nil); err != nil {
 		return nil, err
 	}
 	return jobs, nil

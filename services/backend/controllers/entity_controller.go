@@ -8,6 +8,7 @@ import (
 	"github.com/redis/go-redis/v9"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 	"kayori.io/backend/models"
 )
 
@@ -51,7 +52,8 @@ func CreateNewsArticle(db *mongo.Database, rdb *redis.Client) fiber.Handler {
 func GetNewsArticles(db *mongo.Database) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		articles := make([]models.NewsArticle, 0)
-		if err := (&models.NewsArticle{}).ReadAll(context.Background(), db, "artifacts", bson.M{"entity_type": "news_article"}, &articles); err != nil {
+		findOptions := options.Find().SetSort(bson.D{{Key: "timestamp", Value: -1}})
+		if err := (&models.NewsArticle{}).ReadAll(context.Background(), db, "artifacts", bson.M{"entity_type": "news_article"}, &articles, findOptions); err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"error": err.Error(),
 			})
