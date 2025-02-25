@@ -51,8 +51,11 @@ func CreateNewsArticle(db *mongo.Database, rdb *redis.Client) fiber.Handler {
 
 func GetNewsArticles(db *mongo.Database) fiber.Handler {
 	return func(c *fiber.Ctx) error {
+		page := c.QueryInt("page", 1)
+		skip := (page - 1) * 10
 		articles := make([]models.NewsArticle, 0)
 		findOptions := options.Find().SetSort(bson.D{{Key: "timestamp", Value: -1}})
+		findOptions = findOptions.SetLimit(10).SetSkip(int64(skip))
 		if err := (&models.NewsArticle{}).ReadAll(context.Background(), db, "artifacts", bson.M{"entity_type": "news_article"}, &articles, findOptions); err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"error": err.Error(),
