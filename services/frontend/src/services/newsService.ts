@@ -4,12 +4,12 @@ import { NewsArticle, INewsArticle } from '../models/newsArticle';
 import { getApiHostname } from '../utils/shared';
 const API_URL = await getApiHostname() + '/api/entities/news_articles';
 
-export const getNews = async () => {
+export const getNews = async (page: number) => {
     if (process.env.SKIP_API_CALL == 'true') {
         return [];
     }
     try {
-        const response = await fetch(API_URL);
+        const response = await fetch(`${API_URL}?page=${page}`);
         if (!response.ok) {
             throw new Error('Network response was not ok');
         }
