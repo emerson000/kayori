@@ -12,6 +12,7 @@ import (
 	"github.com/segmentio/kafka-go"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 	"kayori.io/backend/controllers"
 	"kayori.io/backend/models"
 )
@@ -57,7 +58,8 @@ func RegisterRoutes(app *fiber.App, db *mongo.Database, rdb *redis.Client, kafka
 	app.Get("/api/jobs", func(c *fiber.Ctx) error {
 		jobs := make([]models.Job, 0)
 		collection := db.Collection("jobs")
-		cursor, err := collection.Find(context.Background(), bson.D{})
+		findOptions := options.Find().SetSort(bson.D{{Key: "title", Value: 1}})
+		cursor, err := collection.Find(context.Background(), bson.D{}, findOptions)
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"error": err.Error(),
