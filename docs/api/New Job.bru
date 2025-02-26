@@ -1,0 +1,29 @@
+meta {
+  name: New Job
+  type: http
+  seq: 6
+}
+
+post {
+  url: http://localhost:3001/api/jobs
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "title": "Testing",
+    "service": "rss",
+    "task": {
+      "urls":
+        [
+          "https://www.aljazeera.com/xml/rss/all.xml"
+      ]
+    },
+    "schedule": { 
+      "schedule": true,
+      "duration": "1",
+      "interval": "minutes"
+    }
+  }
+}

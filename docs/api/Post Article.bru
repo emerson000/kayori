@@ -1,0 +1,24 @@
+meta {
+  name: Post Article
+  type: http
+  seq: 2
+}
+
+post {
+  url: http://localhost:3001/api/news_article
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "id": "12345",
+    "service": "rss",
+    "task": {
+      "urls":
+        [
+          "https://www.aljazeera.com/xml/rss/all.xml"
+      ]
+    }
+  }
+}
