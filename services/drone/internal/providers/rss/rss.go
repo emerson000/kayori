@@ -29,6 +29,9 @@ type Task struct {
 }
 
 func ProcessTask(jobId string, task *Task, postJSON func(url string, data interface{}) error) {
+	seenURLs := make(map[string]bool)
+	var mu sync.Mutex
+
 	processURL := func(url string) {
 		log.Printf("RSS URL: %+v", url)
 		fp := gofeed.NewParser()
@@ -49,6 +52,16 @@ func ProcessTask(jobId string, task *Task, postJSON func(url string, data interf
 				if item.Link != "" {
 					newsArticle.URL = item.Link
 				}
+				// Check if URL has been seen
+				mu.Lock()
+				if seenURLs[newsArticle.URL] {
+					mu.Unlock()
+					log.Printf("Duplicate article URL: %v", newsArticle.URL)
+					return
+				}
+				seenURLs[newsArticle.URL] = true
+				mu.Unlock()
+
 				newsArticle.Description = item.Description
 				if item.Author != nil {
 					newsArticle.Author = item.Author.Name
