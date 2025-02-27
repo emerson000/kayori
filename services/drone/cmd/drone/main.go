@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 
 	"kayori.io/drone/internal/kafka"
 	"kayori.io/drone/internal/providers/rss"
@@ -18,6 +19,8 @@ const (
 	Deduplicate = "deduplicate"
 )
 
+const maxRetries = 5
+
 // Mock message structure for demonstration
 type Message struct {
 	Type    string
@@ -28,12 +31,24 @@ func main() {
 	fmt.Println("Drone awaiting dispatch")
 
 	consumer := kafka.NewConsumer()
+	retries := 0
 
-	err := consumer.Start(func(value []byte) {
-		processMessage(value)
-	})
-	if err != nil {
-		log.Fatalf("Error starting consumer: %v", err)
+	for {
+		err := consumer.Start(func(value []byte) {
+			if err := processMessage(value); err != nil {
+				log.Printf("Error processing message: %v", err)
+			}
+		})
+		if err != nil {
+			if retries >= maxRetries {
+				log.Fatalf("Error starting consumer after %d retries: %v", maxRetries, err)
+			}
+			log.Printf("Error starting consumer: %v. Retrying in 30 seconds... (Attempt %d/%d)", err, retries+1, maxRetries)
+			time.Sleep(30 * time.Second)
+			retries++
+			continue
+		}
+		break
 	}
 }
 
@@ -51,12 +66,12 @@ const (
 	DeduplicateService ServiceType = "deduplicate"
 )
 
-func processMessage(value []byte) {
+func processMessage(value []byte) error {
 	var msg DroneJob
 	err := json.Unmarshal(value, &msg)
 	if err != nil {
 		log.Printf("Error unmarshaling message: %v", err)
-		return
+		return err
 	}
 
 	log.Printf("Starting job: %v", msg.Service)
@@ -64,7 +79,7 @@ func processMessage(value []byte) {
 	err = unmarshalTask(&msg, value)
 	if err != nil {
 		log.Printf("Error unmarshaling task: %v", err)
-		return
+		return err
 	}
 	switch msg.Service {
 	case RssService:
@@ -74,6 +89,7 @@ func processMessage(value []byte) {
 	}
 
 	log.Printf("Processed job: %+v", msg.Service)
+	return nil
 }
 
 func postJSON(url string, data interface{}) error {
