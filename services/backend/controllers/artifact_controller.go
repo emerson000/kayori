@@ -20,7 +20,12 @@ func DeleteArtifact(db *mongo.Database) fiber.Handler {
 		}
 		var artifact models.Artifact
 		artifact.ID = objId
-		if err := artifact.Delete(context.Background(), db, "artifacts"); err != nil {
+		updateStatement := bson.M{
+			"$set": bson.M{
+				"deleted": true,
+			},
+		}
+		if err := artifact.Update(context.Background(), db, "artifacts", updateStatement); err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"error": err.Error(),
 			})
