@@ -37,7 +37,10 @@ func ProcessTask(jobId string, task *Task, postJSON func(url string, data interf
 		for _, art := range parsedJson {
 			value := getFieldValue(art, task.Field)
 			artifactId := art["id"].(string)
-			if seenValues[value] && value != "" {
+			if seenValues[value] {
+				if value == "" {
+					continue
+				}
 				log.Printf("Duplicate artifact found: %v, %v, %v", artifactId, seenValues[value], value)
 				deletePath := "/api/artifacts/" + artifactId
 				err := data.Delete(deletePath)
