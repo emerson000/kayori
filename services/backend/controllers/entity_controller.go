@@ -56,7 +56,7 @@ func GetNewsArticles(db *mongo.Database) fiber.Handler {
 		articles := make([]models.NewsArticle, 0)
 		findOptions := options.Find().SetSort(bson.D{{Key: "timestamp", Value: -1}})
 		findOptions = findOptions.SetLimit(10).SetSkip(int64(skip))
-		filters := bson.M{"entity_type": "news_article", "deleted": false}
+		filters := bson.M{"entity_type": "news_article", "deleted": bson.M{"$ne": true}}
 		if err := (&models.NewsArticle{}).ReadAll(context.Background(), db, "artifacts", filters, &articles, findOptions); err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"error": err.Error(),

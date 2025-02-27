@@ -161,7 +161,8 @@ func GetJobArtifacts(db *mongo.Database) fiber.Handler {
 				"error": "Invalid job ID",
 			})
 		}
-		cursor, err := collection.Find(context.Background(), bson.M{"job_id": objID})
+		filters := bson.M{"job_id": objID, "deleted": bson.M{"$ne": true}}
+		cursor, err := collection.Find(context.Background(), filters)
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"error": err.Error(),
