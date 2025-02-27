@@ -1,6 +1,6 @@
 'use server'
 
-export async function postTask(service: string, title: string, task: object, schedule: object): Promise<string> {
+export async function postTask(category: string, service: string, title: string, task: object, schedule: object): Promise<string> {
     const path = await getApiHostname() + '/api/jobs';
     const taskBody = {
         title: title,

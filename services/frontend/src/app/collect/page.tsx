@@ -5,7 +5,7 @@ import { IJob } from "../../models/job";
 export const dynamic = 'force-dynamic'
 
 export default async function Page() {
-    const jobs: IJob[] = await getJobs();
+    const jobs: IJob[] = await getJobs('collect');
     return <div>
         <div className="overflow-x-auto">
             <ul className="menu menu-horizontal bg-base-200 float-right">

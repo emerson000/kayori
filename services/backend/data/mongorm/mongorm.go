@@ -97,8 +97,9 @@ func (m *Model) Update(ctx context.Context, db *mongo.Database, collectionName s
 	return nil
 }
 
-func (m *Model) Delete(ctx context.Context, db *mongo.Database, collectionName string, filter interface{}) error {
+func (m *Model) Delete(ctx context.Context, db *mongo.Database, collectionName string) error {
 	collection := db.Collection(collectionName)
+	filter := bson.M{"_id": m.ID}
 	_, err := collection.DeleteOne(ctx, filter)
 	if err != nil {
 		return err

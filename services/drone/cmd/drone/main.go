@@ -9,11 +9,13 @@ import (
 
 	"kayori.io/drone/internal/kafka"
 	"kayori.io/drone/internal/providers/rss"
+	"kayori.io/drone/internal/providers/utilities"
 )
 
 // Define the possible job types (this can come from your Kafka messages)
 const (
-	RssType = "rss"
+	RssType     = "rss"
+	Deduplicate = "deduplicate"
 )
 
 // Mock message structure for demonstration
@@ -36,15 +38,17 @@ func main() {
 }
 
 type DroneJob struct {
-	Id      string      `json:"id"`
-	Service ServiceType `json:"service"`
-	Task    interface{} `json:"task"`
+	Id       string      `json:"id"`
+	Service  ServiceType `json:"service"`
+	Category string      `json:"category"`
+	Task     interface{} `json:"task"`
 }
 
 type ServiceType string
 
 const (
-	RssService ServiceType = "rss"
+	RssService         ServiceType = "rss"
+	DeduplicateService ServiceType = "deduplicate"
 )
 
 func processMessage(value []byte) {
@@ -65,6 +69,8 @@ func processMessage(value []byte) {
 	switch msg.Service {
 	case RssService:
 		rss.ProcessTask(msg.Id, msg.Task.(*rss.Task), postJSON)
+	case DeduplicateService:
+		utilities.ProcessTask(msg.Id, msg.Task.(*utilities.Task), postJSON)
 	}
 
 	log.Printf("Processed job: %+v", msg.Service)
@@ -94,6 +100,14 @@ func unmarshalTask(msg *DroneJob, value []byte) error {
 	case RssService:
 		var raw struct {
 			Task rss.Task `json:"task"`
+		}
+		if err := json.Unmarshal(value, &raw); err != nil {
+			return fmt.Errorf("error unmarshaling task for service %s: %v", msg.Service, err)
+		}
+		msg.Task = &raw.Task
+	case DeduplicateService:
+		var raw struct {
+			Task utilities.Task `json:"task"`
 		}
 		if err := json.Unmarshal(value, &raw); err != nil {
 			return fmt.Errorf("error unmarshaling task for service %s: %v", msg.Service, err)

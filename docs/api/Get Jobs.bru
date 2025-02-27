@@ -5,7 +5,11 @@ meta {
 }
 
 get {
-  url: http://localhost:3001/api/jobs
+  url: http://localhost:3001/api/jobs?category=collect
   body: none
   auth: none
+}
+
+params:query {
+  category: collect
 }

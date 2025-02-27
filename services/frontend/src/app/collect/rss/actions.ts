@@ -11,6 +11,6 @@ export async function createRssFeed(formData: FormData) {
         duration: parseInt(formData.get('duration') as string, 10),
         interval: formData.get('interval') as string,
     }
-    const jobId = await postTask('rss', title, { urls }, schedule);
+    const jobId = await postTask('collect', 'rss', title, { urls }, schedule);
     redirect(`/collect/${jobId}`);
 }

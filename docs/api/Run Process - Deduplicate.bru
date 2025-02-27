@@ -4,15 +4,23 @@ meta {
   seq: 8
 }
 
-patch {
-  url: http://localhost:3001/api/process/deduplicate
+post {
+  url: http://localhost:3001/api/jobs
   body: json
   auth: none
 }
 
 body:json {
   {
-    "job": "67b9f05cc6e23567520de1c4",
-    "field": "url"
+    "title": "Deduplicate",
+    "service": "deduplicate",
+    "category": "process",
+    "task": {
+      "jobs": [
+        "67b9f05cc6e23567520de1c4",
+        "67b9ee95c6e23567520de19b"
+      ],
+      "field": "url"
+    }
   }
 }

@@ -55,9 +55,14 @@ func CreateJob(db *mongo.Database, kafkaWriter *kafka.Writer) fiber.Handler {
 func GetJobs(db *mongo.Database) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		jobs := make([]models.Job, 0)
+		category := c.Query("category")
 		collection := db.Collection("jobs")
 		findOptions := options.Find().SetSort(bson.D{{Key: "title", Value: 1}})
-		cursor, err := collection.Find(context.Background(), bson.D{}, findOptions)
+		filters := bson.M{}
+		if category != "" {
+			filters["category"] = category
+		}
+		cursor, err := collection.Find(context.Background(), filters, findOptions)
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"error": err.Error(),

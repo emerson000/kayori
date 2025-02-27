@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 
@@ -50,6 +51,49 @@ func put(url string, data interface{}) error {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("received non-OK response: %v", resp.Status)
+	}
+
+	return nil
+}
+
+func Get(url string) (string, error) {
+	req, err := http.NewRequest(http.MethodGet, hostname+url, nil)
+	if err != nil {
+		return "", fmt.Errorf("error creating GET request: %v", err)
+	}
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("error making GET request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("received non-OK response: %v", resp.Status)
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("error reading response body: %v", err)
+	}
+
+	return string(body), nil
+}
+
+func Delete(url string) error {
+	req, err := http.NewRequest(http.MethodDelete, hostname+url, nil)
+	if err != nil {
+		return fmt.Errorf("error creating DELETE request: %v", err)
+	}
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("error making DELETE request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusNoContent {
 		return fmt.Errorf("received non-OK response: %v", resp.Status)
 	}
 

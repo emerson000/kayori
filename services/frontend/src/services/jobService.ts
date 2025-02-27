@@ -4,12 +4,12 @@ import { Job, IJob } from '../models/job';
 import { getApiHostname } from '../utils/shared';
 const API_URL = await getApiHostname() + '/api/jobs';
 
-export const getJobs = async () => {
+export const getJobs = async (category = 'collect') => {
     if (process.env.SKIP_API_CALL == 'true') {
         return [];
     }
     try {
-        const response = await fetch(API_URL);
+        const response = await fetch(API_URL + `?category=${category}`);
         if (!response.ok) {
             throw new Error('Network response was not ok');
         }
