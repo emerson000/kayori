@@ -16,7 +16,7 @@ type Task struct {
 
 type artifact map[string]interface{}
 
-func ProcessTask(jobId string, task *Task, postJSON func(url string, data interface{}) error) {
+func ProcessTask(jobId string, task *Task, postJSON func(url string, data interface{}) error) error {
 	log.Printf("Starting deduplication job: %v", jobId)
 	deduplicate := func(job string) {
 		log.Printf("Deduplicating artifacts from job: %v using field %v", job, task.Field)
@@ -68,9 +68,14 @@ func ProcessTask(jobId string, task *Task, postJSON func(url string, data interf
 	objectID, err := bson.ObjectIDFromHex(jobId)
 	if err != nil {
 		log.Printf("Invalid job ID: %v", err)
-		return
+		return err
 	}
-	data.SetJobStatus(objectID, "done")
+	err = data.SetJobStatus(objectID, "done")
+	if err != nil {
+		log.Printf("Error setting job status: %v", err)
+		return err
+	}
+	return nil
 }
 
 func getFieldValue(art artifact, field string) string {

@@ -28,18 +28,18 @@ type Task struct {
 	Urls []string `json:"urls"`
 }
 
-func ProcessTask(jobId string, task *Task, postJSON func(url string, data interface{}) error) {
+func ProcessTask(jobId string, task *Task, postJSON func(url string, data interface{}) error) error {
 	seenURLs := make(map[string]bool)
 	var mu sync.Mutex
 
-	processURL := func(url string) {
+	processURL := func(url string) error {
 		log.Printf("RSS URL: %+v", url)
 		fp := gofeed.NewParser()
 		feed, err := fp.ParseURL(url)
 
 		if err != nil {
-			log.Fatalf("Error parsing feed: %v", err)
-			return
+			log.Printf("Error parsing feed: %v", err)
+			return err
 		}
 
 		var wg sync.WaitGroup
@@ -79,7 +79,7 @@ func ProcessTask(jobId string, task *Task, postJSON func(url string, data interf
 				newsArticle.Service = "rss"
 				newsArticle.JobId, err = bson.ObjectIDFromHex(jobId)
 				if err != nil {
-					log.Fatalf("Error converting job ID to ObjectID: %v", err)
+					log.Printf("Error converting job ID to ObjectID: %v", err)
 					return
 				}
 				newsArticle.Checksum = calculateChecksum(newsArticle)
@@ -88,7 +88,7 @@ func ProcessTask(jobId string, task *Task, postJSON func(url string, data interf
 					if err.Error() == "received non-OK response: 409 Conflict" {
 						log.Printf("Article already exists: %v", newsArticle.Title)
 					} else {
-						log.Fatalf("Error publishing to backend API: %v", err)
+						log.Printf("Error publishing to backend API: %v", err)
 					}
 					return
 				}
@@ -98,28 +98,43 @@ func ProcessTask(jobId string, task *Task, postJSON func(url string, data interf
 		wg.Wait()
 		objId, err := bson.ObjectIDFromHex(jobId)
 		if err != nil {
-			log.Fatalf("Error converting job ID to ObjectID: %v", err)
-			return
+			log.Printf("Error converting job ID to ObjectID: %v", err)
+			return err
 		}
 		err = data.SetJobStatus(objId, "done")
 		if err != nil {
-			log.Fatalf("Error setting job status: %v", err)
-			return
+			log.Printf("Error setting job status: %v", err)
+			return err
 		}
 		log.Printf("Finished parsing RSS feed: %v", feed.Title)
+		return nil
 	}
 
 	if len(task.Urls) > 0 {
 		var wg sync.WaitGroup
+		var processErr error
 		for _, url := range task.Urls {
 			wg.Add(1)
 			go func(url string) {
 				defer wg.Done()
-				processURL(url)
+				err := processURL(url)
+				if err != nil {
+					log.Printf("Error processing URL: %v", err)
+					mu.Lock()
+					processErr = err
+					mu.Unlock()
+				}
 			}(url)
 		}
 		wg.Wait()
+		if processErr != nil {
+			return processErr
+		}
 	} else {
-		processURL(task.Url)
+		err := processURL(task.Url)
+		if err != nil {
+			return err
+		}
 	}
+	return nil
 }

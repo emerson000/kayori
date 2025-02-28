@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"time"
 
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"kayori.io/drone/internal/data"
 	"kayori.io/drone/internal/kafka"
 	"kayori.io/drone/internal/providers/rss"
 	"kayori.io/drone/internal/providers/utilities"
@@ -83,15 +85,30 @@ func processMessage(value []byte) error {
 		log.Printf("Error unmarshaling task: %v", err)
 		return err
 	}
-	switch msg.Service {
-	case RssService:
-		rss.ProcessTask(msg.Id, msg.Task.(*rss.Task), postJSON)
-	case DeduplicateService:
-		utilities.ProcessTask(msg.Id, msg.Task.(*utilities.Task), postJSON)
+
+	err = processServiceTask(msg)
+	if err != nil {
+		objectId, err1 := bson.ObjectIDFromHex(msg.Id)
+		if err1 != nil {
+			log.Printf("Error converting job ID to ObjectID: %v", err1)
+			return err1
+		}
+		data.SetJobStatus(objectId, "failed")
 	}
 
 	log.Printf("Processed job: %+v", msg.Service)
 	return nil
+}
+
+func processServiceTask(msg DroneJob) error {
+	switch msg.Service {
+	case RssService:
+		return rss.ProcessTask(msg.Id, msg.Task.(*rss.Task), postJSON)
+	case DeduplicateService:
+		return utilities.ProcessTask(msg.Id, msg.Task.(*utilities.Task), postJSON)
+	default:
+		return fmt.Errorf("unknown service type: %v", msg.Service)
+	}
 }
 
 func postJSON(url string, data interface{}) error {
