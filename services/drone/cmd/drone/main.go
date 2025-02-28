@@ -47,6 +47,8 @@ func main() {
 			time.Sleep(30 * time.Second)
 			retries++
 			continue
+		} else {
+			log.Println("Consumer started successfully")
 		}
 		break
 	}
