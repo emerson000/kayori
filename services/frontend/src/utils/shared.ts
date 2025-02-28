@@ -6,6 +6,7 @@ export async function postTask(category: string, service: string, title: string,
         title: title,
         service: service,
         status: "pending",
+        category: category,
         task: task
     };
     if (schedule['schedule'] === true) {
