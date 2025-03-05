@@ -17,7 +17,7 @@ export default function SearchBar({ search }: SearchBarProps) {
                 event.preventDefault();
                 inputRef.current?.focus();
                 const length = inputRef.current?.value.length || 0;
-                inputRef.current?.setSelectionRange(length, length);
+                inputRef.current?.setSelectionRange(0, length);
             }
         };
 
