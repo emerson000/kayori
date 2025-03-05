@@ -11,9 +11,18 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ [
         <div>
             <h1 className="text-2xl font-bold">News</h1>
             <SearchBar search={search as string} />
-            {articles && articles.map((article, index) => <MessageCard message={article} key={index} />)}
-            {pageNumber > 1 && <Link className="btn float-left" href={`?page=${pageNumber - 1}`}>Previous</Link>}
-            <Link className="btn float-right" href={`?page=${pageNumber + 1}`}>Next</Link>
+            <div className="clear-both">
+                {pageNumber > 1 && <Link className="btn float-left" href={`?page=${pageNumber - 1}${search != "" ? `&search=${search}` : ''}`}>Previous</Link>}
+                <Link className="btn float-right" href={`?page=${pageNumber + 1}${search != "" ? `&search=${search}` : ''}`}>Next</Link>
+            </div>
+            {articles && articles.length > 0 && <div className="clear-both mt-15">
+                {articles && articles.map((article, index) => <MessageCard message={article} key={index} />)}
+            </div>}
+            {articles && articles.length == 0 && <div className="text-center clear-both py-10 bg-base-200 mt-15 mb-5">No results found</div>}
+            <div className="clear-both mb-20">
+                {pageNumber > 1 && <Link className="btn float-left" href={`?page=${pageNumber - 1}${search != "" ? `&search=${search}` : ''}`}>Previous</Link>}
+                <Link className="btn float-right" href={`?page=${pageNumber + 1}${search != "" ? `&search=${search}` : ''}`}>Next</Link>
+            </div>
         </div>
     );
 }
