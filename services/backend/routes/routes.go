@@ -20,6 +20,10 @@ func RegisterRoutes(app *fiber.App, db *mongo.Database, rdb *redis.Client, kafka
 
 	app.Delete("/api/artifacts/:id", controllers.DeleteArtifact(db))
 
+	app.Post("/api/artifacts/indexes", controllers.CreateArtifactIndex(db))
+	app.Get("/api/artifacts/indexes", controllers.GetArtifactIndexes(db))
+	app.Delete("/api/artifacts/indexes/:name", controllers.DeleteArtifactIndex(db))
+
 	app.Get("/api/ws", controllers.WebSocketHandler(pubsub))
 	app.Get("/api/ws", controllers.WebSocketConnection(pubsub))
 }

@@ -1,0 +1,18 @@
+meta {
+  name: Create Artifact Index
+  type: http
+  seq: 10
+}
+
+post {
+  url: http://localhost:3001/api/artifacts/indexes
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "title": "text",
+    "description": "text"
+  }
+}

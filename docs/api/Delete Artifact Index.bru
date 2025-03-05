@@ -1,0 +1,15 @@
+meta {
+  name: Delete Artifact Index
+  type: http
+  seq: 12
+}
+
+delete {
+  url: http://localhost:3001/api/artifacts/indexes/:name
+  body: none
+  auth: none
+}
+
+params:path {
+  name: title_text_description_text
+}
