@@ -1,0 +1,6 @@
+ollama
+#nltk
+#ipykernel
+#scikit-learn
+#pandas
+#matplotlib

@@ -1,0 +1,18 @@
+meta {
+  name: Health Check
+  type: http
+  seq: 2
+}
+
+get {
+  url: http://localhost:11434/
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "model": "llama3.2",
+    "prompt":"Why is the sky blue?"
+  }
+}

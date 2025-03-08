@@ -54,18 +54,18 @@ services:
       - database
 
   kafka-ui:
-      container_name: kafka-ui
-      image: provectuslabs/kafka-ui:latest
-      ports:
-        - "9000:8080"
-      environment:
-        KAFKA_CLUSTERS_0_NAME: dev-local
-        KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
-        KAFKA_CLUSTERS_0_METRICS_PORT: 9997
-      depends_on:
-        - "kafka"
-      networks:
-        - kayori-network
+    container_name: kafka-ui
+    image: provectuslabs/kafka-ui:latest
+    ports:
+      - "9000:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: dev-local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
+      KAFKA_CLUSTERS_0_METRICS_PORT: 9997
+    depends_on:
+      - "kafka"
+    networks:
+      - kayori-network
 
   kafka:
     image: confluentinc/cp-kafka:latest
@@ -103,6 +103,17 @@ services:
     networks:
       - kayori-network
 
+  ollama:
+    hostname: ollama
+    build:
+      context: ./services/ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+    networks:
+      - kayori-network
+
 networks:
   kayori-network:
     driver: bridge
@@ -110,3 +121,4 @@ networks:
 volumes:
   mongo-data:
   kafka-data:
+  ollama-data:

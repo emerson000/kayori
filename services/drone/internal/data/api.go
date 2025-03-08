@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 
@@ -94,6 +95,32 @@ func Delete(url string) error {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusNoContent {
+		return fmt.Errorf("received non-OK response: %v", resp.Status)
+	}
+
+	return nil
+}
+
+func Post(url string, data interface{}) error {
+	jsonData, err := json.Marshal(data)
+	if err != nil {
+		return fmt.Errorf("error marshaling JSON: %v", err)
+	}
+
+	req, err := http.NewRequest(http.MethodPost, hostname+url, bytes.NewBuffer(jsonData))
+	if err != nil {
+		return fmt.Errorf("error creating POST request: %v", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("error making POST request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
+		log.Printf("JSON Request Body: %s", string(jsonData))
 		return fmt.Errorf("received non-OK response: %v", resp.Status)
 	}
 

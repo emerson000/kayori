@@ -53,13 +53,41 @@ func GetNewsArticles(db *mongo.Database) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		page := c.QueryInt("page", 1)
 		search := c.Query("search")
-		skip := (page - 1) * 10
+		columns := c.Query("columns")
+		limit := c.QueryInt("limit", 10)
+		skip := (page - 1) * limit
 		articles := make([]models.NewsArticle, 0)
 		findOptions := options.Find().SetSort(bson.D{{Key: "timestamp", Value: -1}})
-		findOptions = findOptions.SetLimit(10).SetSkip(int64(skip))
+		findOptions = findOptions.SetLimit(int64(limit)).SetSkip(int64(skip))
 		filters := bson.M{"entity_type": "news_article", "deleted": bson.M{"$ne": true}}
 		if search != "" {
 			filters["$text"] = bson.M{"$search": search}
+		}
+		if columns != "" {
+			var columnsArray []string
+			if err := json.Unmarshal([]byte(columns), &columnsArray); err != nil {
+				return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+					"error": "Invalid JSON array in columns parameter",
+				})
+			}
+			projection := bson.M{}
+			for _, column := range columnsArray {
+				projection[column] = 1
+			}
+			findOptions = findOptions.SetProjection(projection)
+			var results []bson.M
+			cursor, err := db.Collection("artifacts").Find(context.Background(), filters, findOptions)
+			if err != nil {
+				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+					"error": err.Error(),
+				})
+			}
+			if err := cursor.All(context.Background(), &results); err != nil {
+				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+					"error": err.Error(),
+				})
+			}
+			return c.JSON(results)
 		}
 		if err := (&models.NewsArticle{}).ReadAll(context.Background(), db, "artifacts", filters, &articles, findOptions); err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{

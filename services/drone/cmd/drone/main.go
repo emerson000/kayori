@@ -19,6 +19,7 @@ import (
 const (
 	RssType     = "rss"
 	Deduplicate = "deduplicate"
+	Cluster     = "cluster"
 )
 
 const maxRetries = 5
@@ -68,6 +69,7 @@ type ServiceType string
 const (
 	RssService         ServiceType = "rss"
 	DeduplicateService ServiceType = "deduplicate"
+	ClusterService     ServiceType = "cluster"
 )
 
 func processMessage(value []byte) error {
@@ -106,6 +108,8 @@ func processServiceTask(msg DroneJob) error {
 		return rss.ProcessTask(msg.Id, msg.Task.(*rss.Task), postJSON)
 	case DeduplicateService:
 		return utilities.ProcessTask(msg.Id, msg.Task.(*utilities.Task), postJSON)
+	case ClusterService:
+		return utilities.ProcessClusterTask(msg.Id, msg.Task.(*utilities.ClusterTask), postJSON)
 	default:
 		return fmt.Errorf("unknown service type: %v", msg.Service)
 	}
@@ -135,6 +139,14 @@ func unmarshalTask(msg *DroneJob, value []byte) error {
 	case RssService:
 		var raw struct {
 			Task rss.Task `json:"task"`
+		}
+		if err := json.Unmarshal(value, &raw); err != nil {
+			return fmt.Errorf("error unmarshaling task for service %s: %v", msg.Service, err)
+		}
+		msg.Task = &raw.Task
+	case ClusterService:
+		var raw struct {
+			Task utilities.ClusterTask `json:"task"`
 		}
 		if err := json.Unmarshal(value, &raw); err != nil {
 			return fmt.Errorf("error unmarshaling task for service %s: %v", msg.Service, err)

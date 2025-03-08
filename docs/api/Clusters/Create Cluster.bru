@@ -1,0 +1,20 @@
+meta {
+  name: Create Cluster
+  type: http
+  seq: 2
+}
+
+post {
+  url: http://localhost:3001/api/clusters
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "artifacts": [
+      "67cb8cbeeb159c37f7c93d40",
+      "67cc481ec5c2f342e46fd523"
+    ]
+  }
+}

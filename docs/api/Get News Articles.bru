@@ -5,12 +5,14 @@ meta {
 }
 
 get {
-  url: http://localhost:3001/api/entities/news_articles?page=1&search="White House"
+  url: http://localhost:3001/api/entities/news_articles?page=1&columns=["title"]&limit=100
   body: none
   auth: none
 }
 
 params:query {
   page: 1
-  search: "White House"
+  columns: ["title"]
+  limit: 100
+  ~search: "White House"
 }

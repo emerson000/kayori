@@ -1,0 +1,22 @@
+meta {
+  name: New Cluster Job
+  type: http
+  seq: 1
+}
+
+post {
+  url: http://localhost:3001/api/jobs
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "title": "Testing",
+    "service": "cluster",
+    "category": "process",
+    "task": {
+      "entity_type": "news_articles"
+    }
+  }
+}
