@@ -1,0 +1,20 @@
+meta {
+  name: Get News Articles by Cluster
+  type: http
+  seq: 3
+}
+
+get {
+  url: http://{{host}}/api/entities/news_articles?page=1&columns=["title"]&limit=100&after=1741398286
+  body: none
+  auth: none
+}
+
+params:query {
+  page: 1
+  columns: ["title"]
+  limit: 100
+  after: 1741398286
+  ~search: "White House"
+  ~cluster: 67ccfca8026c1496a9b2720a
+}

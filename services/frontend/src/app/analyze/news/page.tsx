@@ -2,6 +2,7 @@ import Link from "next/link";
 import MessageCard from "../../../components/MessageCard";
 import { getNews } from "../../../services/newsService";
 import SearchBar from "./searchBar";
+import { NewsArticle } from "../../../models/newsArticle";
 
 export default async function Page({ searchParams }: { searchParams: Promise<{ [key: string]: string | string[] | undefined }> }) {
     const { page = '1', search } = await searchParams;
@@ -17,7 +18,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ [
                 <Link className="btn float-right" href={`?page=${pageNumber + 1}${search ? `&search=${searchEncoded}` : ''}`}>Next</Link>
             </div>
             {articles && articles.length > 0 && <div className="clear-both mt-15">
-                {articles && articles.map((article, index) => <MessageCard message={article} key={index} />)}
+                {articles && articles.map((article: NewsArticle, index) => <MessageCard message={article} key={index} />)}
             </div>}
             {articles && articles.length == 0 && <div className="text-center clear-both py-10 bg-base-200 mt-15 mb-5">No results found</div>}
             <div className="clear-both mb-20">

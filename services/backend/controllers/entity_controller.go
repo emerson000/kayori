@@ -59,6 +59,7 @@ func GetNewsArticles(db *mongo.Database) fiber.Handler {
 		limit := c.QueryInt("limit", 10)
 		// Unix time code to filter on or after date
 		after := c.QueryInt("after", 0)
+		cluster := c.Query("cluster")
 		skip := (page - 1) * limit
 		articles := make([]models.NewsArticle, 0)
 		findOptions := options.Find().SetSort(bson.D{{Key: "timestamp", Value: -1}})
@@ -70,6 +71,15 @@ func GetNewsArticles(db *mongo.Database) fiber.Handler {
 		if after != 0 {
 			afterTime := time.Unix(int64(after), 0)
 			filters["timestamp"] = bson.M{"$gte": afterTime}
+		}
+		if cluster != "" {
+			clusterId, err := bson.ObjectIDFromHex(cluster)
+			if err != nil {
+				return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+					"error": "Invalid cluster ID",
+				})
+			}
+			filters["cluster_id"] = clusterId
 		}
 		if columns != "" {
 			var columnsArray []string
