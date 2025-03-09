@@ -3,6 +3,7 @@ package controllers
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/redis/go-redis/v9"
@@ -87,6 +88,8 @@ func GetNewsArticles(db *mongo.Database) fiber.Handler {
 					"error": err.Error(),
 				})
 			}
+			hasMore := len(results) == limit
+			c.Set("X-Has-More", fmt.Sprintf("%v", hasMore))
 			return c.JSON(results)
 		}
 		if err := (&models.NewsArticle{}).ReadAll(context.Background(), db, "artifacts", filters, &articles, findOptions); err != nil {
@@ -94,6 +97,8 @@ func GetNewsArticles(db *mongo.Database) fiber.Handler {
 				"error": err.Error(),
 			})
 		}
+		hasMore := len(articles) == limit
+		c.Set("X-Has-More", fmt.Sprintf("%v", hasMore))
 		return c.JSON(articles)
 	}
 }
