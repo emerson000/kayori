@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"context"
+	"log"
 
 	"github.com/gofiber/fiber/v2"
 	"go.mongodb.org/mongo-driver/v2/bson"
@@ -45,6 +46,7 @@ func CreateCluster(db *mongo.Database) fiber.Handler {
 						"error": err.Error(),
 					})
 				}
+				updateArtifacts(db, existingCluster.Artifacts, existingCluster.ID)
 				return c.Status(fiber.StatusOK).JSON(existingCluster)
 			}
 		}
@@ -55,8 +57,26 @@ func CreateCluster(db *mongo.Database) fiber.Handler {
 				"error": err.Error(),
 			})
 		}
+		updateArtifacts(db, cluster.Artifacts, cluster.ID)
 		return c.Status(fiber.StatusCreated).JSON(cluster)
 	}
+}
+
+func updateArtifacts(db *mongo.Database, artifacts []bson.ObjectID, clusterId bson.ObjectID) error {
+	for _, id := range artifacts {
+		artifactUpdate := bson.M{
+			"$set": bson.M{
+				"cluster_id": clusterId,
+			},
+		}
+		model := models.Artifact{}
+		model.ID = id
+		if err := model.Update(context.Background(), db, "artifacts", artifactUpdate); err != nil {
+			return err
+		}
+		log.Printf("Updated artifact with ID %s to cluster ID %s", id.Hex(), clusterId.Hex())
+	}
+	return nil
 }
 
 func GetCluster(db *mongo.Database) fiber.Handler {
