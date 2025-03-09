@@ -21,5 +21,5 @@ type NewsArticle struct {
 	ServiceID     string        `bson:"service_id" json:"service_id"`
 	Checksum      string        `bson:"checksum" json:"checksum"`
 	JobId         bson.ObjectID `bson:"job_id" json:"job_id"`
-	ClusterID     bson.ObjectID `bson:"cluster_id" json:"cluster_id"`
+	ClusterID     bson.ObjectID `bson:"cluster_id,omitempty" json:"cluster_id,omitempty"`
 }
