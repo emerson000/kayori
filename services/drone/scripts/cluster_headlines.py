@@ -10,6 +10,8 @@ from sklearn.cluster import DBSCAN
 from sklearn.decomposition import PCA
 import asyncio
 
+OLLAMA_BATCH_SIZE = 50
+
 input_data = sys.stdin.read()
 articles = json.loads(input_data)
 nltk.download('stopwords', quiet=True)
@@ -41,9 +43,13 @@ async def main():
 
     ollama_client = ollama.Client(host='http://ollama:11434')
 
-    response = ollama_client.embed(model='nomic-embed-text', input=processed_headlines)
+    all_embeddings = []
+    for i in range(0, len(processed_headlines), OLLAMA_BATCH_SIZE):
+        batch = processed_headlines[i:i + OLLAMA_BATCH_SIZE]
+        response = ollama_client.embed(model='nomic-embed-text', input=batch)
+        all_embeddings.extend(response['embeddings'])
 
-    vectors = np.array(response['embeddings'])
+    vectors = np.array(all_embeddings)
 
     # Reduce dimensionality of embeddings
     pca = PCA(n_components=0.98)  # Adjust the number of components as needed
