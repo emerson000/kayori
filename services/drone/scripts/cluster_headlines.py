@@ -11,6 +11,7 @@ from sklearn.decomposition import PCA
 import asyncio
 
 OLLAMA_BATCH_SIZE = 50
+MAX_CLUSTER_SIZE = 1000
 
 input_data = sys.stdin.read()
 articles = json.loads(input_data)
@@ -70,6 +71,9 @@ async def main():
             clustered_headlines[cluster_key] = []
         article = articles[i]
         clustered_headlines[cluster_key].append(article)
+
+    # Remove clusters that exceed the maximum size
+    clustered_headlines = {k: v for k, v in clustered_headlines.items() if len(v) <= MAX_CLUSTER_SIZE}
 
     print(json.dumps(clustered_headlines, indent=2))
 
