@@ -5,14 +5,15 @@ meta {
 }
 
 get {
-  url: http://{{host}}/api/entities/news_articles?page=1&columns=["title"]&limit=100
+  url: http://{{host}}/api/entities/news_articles?page=7&columns=["title"]&limit=100&after=1741398286
   body: none
   auth: none
 }
 
 params:query {
-  page: 1
+  page: 7
   columns: ["title"]
   limit: 100
+  after: 1741398286
   ~search: "White House"
 }

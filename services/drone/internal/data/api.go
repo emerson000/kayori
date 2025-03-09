@@ -59,27 +59,35 @@ func put(url string, data interface{}) error {
 }
 
 func Get(url string) (string, error) {
+	body, _, err := GetBodyAndResponse(url)
+	if err != nil {
+		return "", err
+	}
+	return body, nil
+
+}
+
+func GetBodyAndResponse(url string) (string, *http.Response, error) {
 	req, err := http.NewRequest(http.MethodGet, hostname+url, nil)
 	if err != nil {
-		return "", fmt.Errorf("error creating GET request: %v", err)
+		return "", nil, fmt.Errorf("error creating GET request: %v", err)
 	}
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return "", fmt.Errorf("error making GET request: %v", err)
+		return "", nil, fmt.Errorf("error making GET request: %v", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("received non-OK response: %v", resp.Status)
+		return "", nil, fmt.Errorf("received non-OK response: %v", resp.Status)
 	}
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return "", fmt.Errorf("error reading response body: %v", err)
+		return "", nil, fmt.Errorf("error reading response body: %v", err)
 	}
-
-	return string(body), nil
+	return string(body), resp, nil
 }
 
 func Delete(url string) error {

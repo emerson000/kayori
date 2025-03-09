@@ -3,30 +3,83 @@ package utilities
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"log"
 	"os/exec"
+	"strconv"
+	"time"
 
 	"kayori.io/drone/internal/data"
 )
 
 type ClusterTask struct {
 	EntityType string `json:"entity_type"`
+	After      int64  `json:"after"`
 }
 
 func ProcessClusterTask(jobId string, task *ClusterTask, postJSON func(url string, data interface{}) error) error {
 	log.Printf("Starting cluster job: %v", jobId)
 	entity_type := task.EntityType
 	log.Printf("Processing cluster task for entity type: %v", entity_type)
-	path := "/api/entities/" + entity_type + "?columns=[\"title\"]&limit=100"
-	resp, err := data.Get(path)
+	currentPage := 1
+	limit := 100
+	hasMore := true
+	after := task.After
+	if after == 0 {
+		after = time.Now().Add(-168 * time.Hour).Unix()
+	}
+	// Cache to store unmarshaled JSON for each page
+	pageCache := make(map[int]interface{})
+
+	// Synchronously calculate the total number of pages and cache the responses
+	for hasMore {
+		log.Printf("Fetching data for page %d", currentPage)
+		path := "/api/entities/" + entity_type + "?columns=[\"title\"]&limit=" + strconv.Itoa(limit) + "&page=" + strconv.Itoa(currentPage) + "&after=" + strconv.FormatInt(after, 10)
+		body, resp, err := data.GetBodyAndResponse(path)
+		if err != nil {
+			log.Printf("Error fetching cluster data: %v", err)
+			return err
+		}
+		if body == "" {
+			log.Printf("No data found for entity type: %v", entity_type)
+			break
+		}
+		var jsonData interface{}
+		err = json.Unmarshal([]byte(body), &jsonData)
+		if err != nil {
+			log.Printf("Error unmarshalling JSON body: %v", err)
+			return err
+		}
+		pageCache[currentPage] = jsonData
+		hasMoreHeader := resp.Header.Get("x-has-more")
+		hasMore, err = strconv.ParseBool(hasMoreHeader)
+		if err != nil {
+			log.Printf("Error parsing x-has-more header: %v", err)
+			return err
+		}
+		currentPage++
+	}
+
+	// Join all pages in pageCache
+	var allData []interface{}
+	for i := 1; i < currentPage; i++ {
+		pageData, ok := pageCache[i].([]interface{})
+		if !ok {
+			log.Printf("Error asserting page data to []interface{}")
+			return fmt.Errorf("error asserting page data to []interface{}")
+		}
+		allData = append(allData, pageData...)
+	}
+
+	allDataBytes, err := json.Marshal(allData)
 	if err != nil {
-		log.Printf("Error fetching cluster data: %v", err)
+		log.Printf("Error marshalling all data: %v", err)
+		return err
 	}
-	if resp == "" {
-		log.Printf("No data found for entity type: %v", entity_type)
-	}
+
+	// Process the response
 	cmd := exec.Command("scripts/.venv/bin/python3", "scripts/cluster_headlines.py")
-	cmd.Stdin = bytes.NewReader([]byte(resp))
+	cmd.Stdin = bytes.NewReader(allDataBytes)
 	var out bytes.Buffer
 	var stderr bytes.Buffer
 	cmd.Stdout = &out
@@ -66,5 +119,7 @@ func ProcessClusterTask(jobId string, task *ClusterTask, postJSON func(url strin
 			return err
 		}
 	}
+
+	log.Printf("Total pages processed: %d", currentPage-1)
 	return nil
 }

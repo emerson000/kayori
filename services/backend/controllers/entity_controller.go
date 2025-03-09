@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/redis/go-redis/v9"
@@ -56,6 +57,8 @@ func GetNewsArticles(db *mongo.Database) fiber.Handler {
 		search := c.Query("search")
 		columns := c.Query("columns")
 		limit := c.QueryInt("limit", 10)
+		// Unix time code to filter on or after date
+		after := c.QueryInt("after", 0)
 		skip := (page - 1) * limit
 		articles := make([]models.NewsArticle, 0)
 		findOptions := options.Find().SetSort(bson.D{{Key: "timestamp", Value: -1}})
@@ -63,6 +66,10 @@ func GetNewsArticles(db *mongo.Database) fiber.Handler {
 		filters := bson.M{"entity_type": "news_article", "deleted": bson.M{"$ne": true}}
 		if search != "" {
 			filters["$text"] = bson.M{"$search": search}
+		}
+		if after != 0 {
+			afterTime := time.Unix(int64(after), 0)
+			filters["timestamp"] = bson.M{"$gte": afterTime}
 		}
 		if columns != "" {
 			var columnsArray []string
