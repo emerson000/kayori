@@ -68,9 +68,17 @@ async def main():
     for (i, _), cluster in zip(indexed_reduced_vectors, clusters):
         cluster_key = str(cluster)  # Convert cluster key to string
         if cluster_key not in clustered_headlines:
-            clustered_headlines[cluster_key] = []
+            clustered_headlines[cluster_key] = {
+                'articles': [],
+                'centroid': None
+            }
         article = articles[i]
-        clustered_headlines[cluster_key].append(article)
+        row = {
+            'article': article,
+            'embedding': all_embeddings[i]
+        }
+        clustered_headlines[cluster_key]['articles'].append(row)
+        clustered_headlines[cluster_key]['centroid'] = np.mean([a['embedding'] for a in clustered_headlines[cluster_key]['articles']], axis=0).tolist()
 
     # Remove clusters that exceed the maximum size
     clustered_headlines = {k: v for k, v in clustered_headlines.items() if len(v) <= MAX_CLUSTER_SIZE}

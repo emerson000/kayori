@@ -91,7 +91,7 @@ func ProcessClusterTask(jobId string, task *ClusterTask, postJSON func(url strin
 		return err
 	}
 
-	var clusters map[string][]map[string]interface{}
+	var clusters map[string]map[string]interface{}
 	err = json.Unmarshal(out.Bytes(), &clusters)
 	if err != nil {
 		log.Printf("Error unmarshalling JSON output: %v", err)
@@ -105,8 +105,23 @@ func ProcessClusterTask(jobId string, task *ClusterTask, postJSON func(url strin
 	}
 	for _, cluster := range clusters {
 		ids := make([]string, 0)
-		for _, item := range cluster {
-			if id, ok := item["_id"]; ok {
+		for _, item := range cluster["articles"].([]interface{}) {
+			itemMap, ok := item.(map[string]interface{})
+			if !ok {
+				log.Printf("Error asserting item to map[string]interface{}")
+				return fmt.Errorf("error asserting item to map[string]interface{}")
+			}
+			article, ok := itemMap["article"]
+			if !ok {
+				log.Printf("Error finding article in item")
+				return fmt.Errorf("error finding article in item")
+			}
+			articleMap, ok := article.(map[string]interface{})
+			if !ok {
+				log.Printf("Error asserting article to map[string]interface{}")
+				return fmt.Errorf("error asserting article to map[string]interface{}")
+			}
+			if id, ok := articleMap["_id"]; ok {
 				ids = append(ids, id.(string))
 			}
 		}
