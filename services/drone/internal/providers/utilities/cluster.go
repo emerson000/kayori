@@ -146,14 +146,15 @@ func processResponse(allData []interface{}) (map[string]map[string]interface{}, 
 		log.Printf("Stderr: %s", stderr.String())
 		return nil, err
 	}
-
+	log.Print("Python script completed successfully")
+	log.Print("Starting to parse JSON output")
 	var clusters map[string]map[string]interface{}
 	err = json.Unmarshal(out.Bytes(), &clusters)
 	if err != nil {
 		log.Printf("Error unmarshalling JSON output: %v", err)
 		return nil, err
 	}
-
+	log.Print("Finished parsing JSON output")
 	delete(clusters, "-1")
 	if len(clusters) == 0 {
 		log.Printf("No clusters found in the output")
@@ -163,6 +164,7 @@ func processResponse(allData []interface{}) (map[string]map[string]interface{}, 
 }
 
 func postClusters(clusters map[string]map[string]interface{}) error {
+	log.Print("Posting clusters to the server")
 	for _, cluster := range clusters {
 		ids := make([]string, 0)
 		for _, item := range cluster["articles"].([]interface{}) {
@@ -187,6 +189,7 @@ func postClusters(clusters map[string]map[string]interface{}) error {
 		}
 		body := map[string]interface{}{
 			"artifacts": ids,
+			"centroid":  cluster["centroid"],
 		}
 		err := data.Post("/api/clusters", body)
 		if err != nil {

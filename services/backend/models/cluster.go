@@ -8,4 +8,5 @@ import (
 type Cluster struct {
 	mongorm.Model `bson:",inline"`
 	Artifacts     []bson.ObjectID `bson:"artifacts" json:"artifacts"`
+	Centroid      []float64       `bson:"centroid" json:"centroid"`
 }

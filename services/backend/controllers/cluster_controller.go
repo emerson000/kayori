@@ -41,6 +41,10 @@ func CreateCluster(db *mongo.Database) fiber.Handler {
 						"artifacts": existingCluster.Artifacts,
 					},
 				}
+				if len(cluster.Centroid) > 0 {
+					existingCluster.Centroid = cluster.Centroid
+					updateStatement["$set"].(bson.M)["centroid"] = cluster.Centroid
+				}
 				if err := existingCluster.Update(context.Background(), db, "clusters", updateStatement); err != nil {
 					return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 						"error": err.Error(),
