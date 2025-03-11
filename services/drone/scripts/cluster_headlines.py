@@ -38,16 +38,17 @@ async def process_headlines(articles):
     return await asyncio.gather(*tasks)
 
 async def main():
+    send_status_update("Starting clustering process.")
     processed_headlines = await process_headlines(articles)
-
+    send_status_update("Preprocessing completed. Starting embedding.")
     ollama_client = ollama.Client(host='http://ollama:11434')
-
     all_embeddings = []
     for i in range(0, len(processed_headlines), OLLAMA_BATCH_SIZE):
+        send_status_update(f"Processing batch {i // OLLAMA_BATCH_SIZE + 1} of {len(processed_headlines) // OLLAMA_BATCH_SIZE + 1}...")
         batch = processed_headlines[i:i + OLLAMA_BATCH_SIZE]
         response = ollama_client.embed(model='nomic-embed-text', input=batch)
         all_embeddings.extend(response['embeddings'])
-
+    send_status_update("Embedding completed. Starting clustering.")
     vectors = normalize(np.array(all_embeddings))
 
     # Reduce dimensionality of embeddings
@@ -60,7 +61,7 @@ async def main():
     # Perform clustering on reduced vectors
     dbscan = DBSCAN(eps=0.7, min_samples=2)  # Adjust eps for better clustering
     clusters = dbscan.fit_predict(reduced_vectors)
-
+    send_status_update("Clustering completed. Building cluster output.")
     # Display clusters
     clustered_headlines = {}
     for (i, _), cluster in zip(indexed_reduced_vectors, clusters):
@@ -77,11 +78,14 @@ async def main():
         }
         clustered_headlines[cluster_key]['articles'].append(row)
         clustered_headlines[cluster_key]['centroid'] = np.mean([a['embedding'] for a in clustered_headlines[cluster_key]['articles']], axis=0).tolist()
-
+    send_status_update("Calculating centroids.")
     # Remove clusters that exceed the maximum size
     clustered_headlines = {k: v for k, v in clustered_headlines.items() if len(v) <= MAX_CLUSTER_SIZE}
-
+    send_status_update("Clustering process completed.")
     print(json.dumps(clustered_headlines, indent=2))
+
+def send_status_update(message):
+    os.write(3, message.encode('utf-8'))
 
 if __name__ == "__main__":
     asyncio.run(main())

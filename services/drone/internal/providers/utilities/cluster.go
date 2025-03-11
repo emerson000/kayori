@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"os/exec"
 	"strconv"
 	"time"
@@ -114,6 +115,31 @@ func processResponse(allData []interface{}) (map[string]map[string]interface{}, 
 	var stderr bytes.Buffer
 	cmd.Stdout = &out
 	cmd.Stderr = &stderr
+
+	// Create a pipe for status updates
+	statusReader, statusWriter, err := os.Pipe()
+	if err != nil {
+		log.Printf("Error creating pipe: %v", err)
+		return nil, err
+	}
+	defer statusReader.Close()
+	defer statusWriter.Close()
+
+	// Pass the write-end of the pipe to the child process
+	cmd.ExtraFiles = []*os.File{statusWriter}
+
+	// Goroutine to read status updates
+	go func() {
+		statusBuf := make([]byte, 1024)
+		for {
+			n, err := statusReader.Read(statusBuf)
+			if err != nil {
+				break
+			}
+			log.Printf("Status update: %s", string(statusBuf[:n]))
+		}
+	}()
+
 	err = cmd.Run()
 	if err != nil {
 		log.Printf("Error running Python script: %v", err)
