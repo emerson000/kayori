@@ -10,6 +10,7 @@ services:
       - backend
     networks:
       - kayori-network
+    restart: always
 
   backend:
     hostname: backend
@@ -23,6 +24,7 @@ services:
       - kafka
     networks:
       - kayori-network
+    restart: always
 
   database:
     hostname: mongo
@@ -66,6 +68,7 @@ services:
       - "kafka"
     networks:
       - kayori-network
+    restart: always
 
   kafka:
     image: confluentinc/cp-kafka:latest
@@ -91,6 +94,7 @@ services:
       - kayori-network
     volumes:
       - kafka-data:/var/lib/kafka/data
+    restart: always
 
   drone:
     build:
@@ -102,6 +106,7 @@ services:
       - KAFKA_BROKER=kafka:29092
     networks:
       - kayori-network
+    restart: always
 
   ollama:
     hostname: ollama
@@ -113,6 +118,7 @@ services:
       - ollama-data:/root/.ollama
     networks:
       - kayori-network
+    restart: always
 
 networks:
   kayori-network:

@@ -2,4 +2,4 @@
 
 docker compose build
 docker compose down
-docker compose -f docker-compose-prod.yml up -d
+docker compose -f docker-compose-prod.yml up --scale drone=2 -d
