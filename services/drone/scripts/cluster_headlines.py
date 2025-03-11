@@ -8,6 +8,8 @@ import ollama
 import numpy as np
 from sklearn.cluster import DBSCAN
 from sklearn.decomposition import PCA
+from sklearn.preprocessing import normalize
+from nltk.corpus import stopwords
 import asyncio
 
 OLLAMA_BATCH_SIZE = 50
@@ -18,20 +20,16 @@ articles = json.loads(input_data)
 nltk.download('stopwords', quiet=True)
 nltk.download('punkt', quiet=True)
 nltk.download('punkt_tab', quiet=True)
-
-from nltk.corpus import stopwords
-stopwords.words('english')  # Ensure stopwords are loaded
+stopwords.words('english')
 
 def preprocess_text(article):
-    text = article['title']
-    text = text.lower()  # Convert to lowercase
-    text = text.strip()
+    text = article.get('title', '')
+    text = text.lower().strip()
     text = re.sub(r'\d+', '', text)  # Remove numbers
     text = re.sub(r'[^\w\s]', '', text)  # Remove punctuation
     text = re.sub(r'\s+', ' ', text)  # Remove extra spaces
-    tokens = nltk.tokenize.word_tokenize(text)  # Tokenize
-    tokens = [word for word in tokens if word.isalpha()]  # Keep only alphabetic tokens
-    tokens = [word for word in tokens if word not in stopwords.words('english')]  # Remove stopwords
+    tokens = nltk.tokenize.word_tokenize(text)
+    tokens = [word for word in tokens if word.isalpha() and word not in {'the', 'a', 'an', 'is', 'are'}]
     return ' '.join(tokens)
 
 async def process_headlines(articles):
@@ -50,10 +48,10 @@ async def main():
         response = ollama_client.embed(model='nomic-embed-text', input=batch)
         all_embeddings.extend(response['embeddings'])
 
-    vectors = np.array(all_embeddings)
+    vectors = normalize(np.array(all_embeddings))
 
     # Reduce dimensionality of embeddings
-    pca = PCA(n_components=0.98)  # Adjust the number of components as needed
+    pca = PCA(n_components=0.95)  # Adjust the number of components as needed
     reduced_vectors = pca.fit_transform(vectors)
 
     # Create a list of tuples (index, reduced_vector)
