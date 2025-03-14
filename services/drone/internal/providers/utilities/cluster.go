@@ -15,8 +15,9 @@ import (
 )
 
 type ClusterTask struct {
-	EntityType string `json:"entity_type"`
-	After      int64  `json:"after"`
+	EntityType  string `json:"entity_type"`
+	Incremental bool   `json:"incremental,omitempty"`
+	After       int64  `json:"after"`
 }
 
 func ProcessClusterTask(jobId string, task *ClusterTask, postJSON func(url string, data interface{}) error) error {
@@ -33,7 +34,7 @@ func ProcessClusterTask(jobId string, task *ClusterTask, postJSON func(url strin
 	pageCache := make(map[int]interface{})
 
 	for hasMore {
-		body, resp, err := fetchData(entity_type, limit, currentPage, after)
+		body, resp, err := fetchData(entity_type, limit, currentPage, after, task.Incremental)
 		if err != nil {
 			return err
 		}
@@ -60,7 +61,28 @@ func ProcessClusterTask(jobId string, task *ClusterTask, postJSON func(url strin
 		return err
 	}
 
-	clusters, err := processResponse(allData)
+	allDataMap := map[string][]interface{}{
+		"articles": allData,
+	}
+
+	if task.Incremental {
+		log.Printf("Incremental mode enabled, fetching clusters")
+		allDataMap["clusters"] = []interface{}{}
+		results, err := data.Get("/api/clusters")
+		if err != nil {
+			log.Printf("Error fetching clusters: %v", err)
+			return err
+		}
+		var clustersData []interface{}
+		err = json.Unmarshal([]byte(results), &clustersData)
+		if err != nil {
+			log.Printf("Error unmarshalling clusters data: %v", err)
+			return err
+		}
+		allDataMap["clusters"] = clustersData
+	}
+
+	clusters, err := processResponse(allDataMap, task.Incremental)
 	if err != nil {
 		return err
 	}
@@ -68,9 +90,12 @@ func ProcessClusterTask(jobId string, task *ClusterTask, postJSON func(url strin
 	return postClusters(clusters)
 }
 
-func fetchData(entityType string, limit, currentPage int, after int64) (string, *http.Response, error) {
+func fetchData(entityType string, limit, currentPage int, after int64, incremental bool) (string, *http.Response, error) {
 	log.Printf("Fetching data for page %d", currentPage)
 	path := fmt.Sprintf("/api/entities/%s?columns=[\"title\"]&limit=%d&page=%d&after=%d", entityType, limit, currentPage, after)
+	if incremental {
+		path += "&cluster=none"
+	}
 	body, resp, err := data.GetBodyAndResponse(path)
 	if err != nil {
 		log.Printf("Error fetching cluster data: %v", err)
@@ -102,7 +127,7 @@ func joinPages(pageCache map[int]interface{}, currentPage int) ([]interface{}, e
 	return allData, nil
 }
 
-func processResponse(allData []interface{}) (map[string]map[string]interface{}, error) {
+func processResponse(allData map[string][]interface{}, incremental bool) (map[string]map[string]interface{}, error) {
 	allDataBytes, err := json.Marshal(allData)
 	if err != nil {
 		log.Printf("Error marshalling all data: %v", err)
@@ -146,7 +171,13 @@ func processResponse(allData []interface{}) (map[string]map[string]interface{}, 
 		log.Printf("Stderr: %s", stderr.String())
 		return nil, err
 	}
+
 	log.Print("Python script completed successfully")
+	err = os.WriteFile("/tmp/out.json", out.Bytes(), 0644)
+	if err != nil {
+		log.Printf("Error writing output to /tmp/out.json: %v", err)
+		return nil, err
+	}
 	log.Print("Starting to parse JSON output")
 	var clusters map[string]map[string]interface{}
 	err = json.Unmarshal(out.Bytes(), &clusters)
@@ -190,6 +221,9 @@ func postClusters(clusters map[string]map[string]interface{}) error {
 		body := map[string]interface{}{
 			"artifacts": ids,
 			"centroid":  cluster["centroid"],
+		}
+		if clusterID, ok := cluster["id"]; ok {
+			body["id"] = clusterID
 		}
 		err := data.Post("/api/clusters", body)
 		if err != nil {

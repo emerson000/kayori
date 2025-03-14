@@ -72,7 +72,7 @@ func GetNewsArticles(db *mongo.Database) fiber.Handler {
 			afterTime := time.Unix(int64(after), 0)
 			filters["timestamp"] = bson.M{"$gte": afterTime}
 		}
-		if cluster != "" {
+		if cluster != "" && cluster != "none" {
 			clusterId, err := bson.ObjectIDFromHex(cluster)
 			if err != nil {
 				return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -80,6 +80,9 @@ func GetNewsArticles(db *mongo.Database) fiber.Handler {
 				})
 			}
 			filters["cluster_id"] = clusterId
+		}
+		if cluster == "none" {
+			filters["cluster_id"] = bson.M{"$exists": false}
 		}
 		if columns != "" {
 			var columnsArray []string

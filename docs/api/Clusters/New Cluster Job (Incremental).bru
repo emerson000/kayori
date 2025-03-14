@@ -1,7 +1,7 @@
 meta {
-  name: New Cluster Job
+  name: New Cluster Job (Incremental)
   type: http
-  seq: 1
+  seq: 2
 }
 
 post {
@@ -17,6 +17,7 @@ body:json {
     "category": "process",
     "task": {
       "entity_type": "news_articles",
+      "incremental": true,
       "after": 1741742218
     }
   }
