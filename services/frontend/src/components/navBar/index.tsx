@@ -1,43 +1,47 @@
 import Link from "next/link";
 
-export default function NavBar() {
-    return <div className="navbar bg-base-100">
+const navItems = [
+  <li><Link href="/">Home</Link></li>,
+  <li><Link href="/collect">Collect</Link></li>,
+  <li><Link href="/process">Process</Link></li>,
+  <li><Link href="/analyze">Analyze</Link></li>
+]
+
+export function NavBar() {
+  return <div className="navbar bg-base-100">
     <div className="navbar-start">
-      <div className="dropdown">
-        <div tabIndex={0} role="button" className="btn btn-ghost lg:hidden">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-5 w-5"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor">
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M4 6h16M4 12h8m-8 6h16" />
-          </svg>
-        </div>
-        <ul
-          tabIndex={0}
-          className="menu menu-sm dropdown-content bg-base-100 rounded-box z-[1] mt-3 w-52 p-2 shadow">
-          <li><a>Item 1</a></li>
-          <li>
-            <a>Parent</a>
-            <ul className="p-2">
-              <li><a>Submenu 1</a></li>
-              <li><a>Submenu 2</a></li>
-            </ul>
-          </li>
-          <li><a>Item 3</a></li>
-        </ul>
-      </div>
+      <label htmlFor="my-drawer-3" aria-label="open sidebar" className="btn btn-square btn-ghost lg:hidden">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          className="inline-block h-6 w-6 stroke-current">
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="2"
+            d="M4 6h16M4 12h16M4 18h16"></path>
+        </svg>
+      </label>
       <Link href="/" className="btn btn-ghost text-xl">Kayori</Link>
       <ul className="menu menu-horizontal px-1 hidden lg:flex">
-        <li><Link href="/">Home</Link></li>
-        <li><Link href="/collect">Collect</Link></li>
-        <li><Link href="/process">Process</Link></li>
-        <li><Link href="/analyze">Analyze</Link></li>
+        {navItems && navItems.map((item) => item)}
+      </ul>
+    </div>
+  </div >
+}
+
+export function BodyWithSidebar(props: { children: React.ReactNode }) {
+  return <div className="drawer">
+    <input id="my-drawer-3" type="checkbox" className="drawer-toggle" />
+    <div className="drawer-content flex flex-col">
+      <NavBar />
+      {props.children}
+    </div>
+    <div className="drawer-side">
+      <label htmlFor="my-drawer-3" aria-label="close sidebar" className="drawer-overlay"></label>
+      <ul className="menu bg-base-200 min-h-full w-80 p-4">
+        {navItems && navItems.map((item) => item)}
       </ul>
     </div>
   </div>
