@@ -96,16 +96,6 @@ func ProcessTask(jobId string, task *Task, postJSON func(url string, data interf
 			}(item)
 		}
 		wg.Wait()
-		objId, err := bson.ObjectIDFromHex(jobId)
-		if err != nil {
-			log.Printf("Error converting job ID to ObjectID: %v", err)
-			return err
-		}
-		err = data.SetJobStatus(objId, "done")
-		if err != nil {
-			log.Printf("Error setting job status: %v", err)
-			return err
-		}
 		log.Printf("Finished parsing RSS feed: %v", feed.Title)
 		return nil
 	}

@@ -82,6 +82,17 @@ func processMessage(value []byte) error {
 
 	log.Printf("Starting job: %v", msg.Service)
 
+	objectId, err1 := bson.ObjectIDFromHex(msg.Id)
+	if err1 != nil {
+		log.Printf("Error converting job ID to ObjectID: %v", err1)
+		return err1
+	}
+
+	if err := data.SetJobStatus(objectId, "in_progress"); err != nil {
+		log.Printf("Error setting job status: %v", err)
+		return err
+	}
+
 	err = unmarshalTask(&msg, value)
 	if err != nil {
 		log.Printf("Error unmarshaling task: %v", err)
@@ -90,14 +101,13 @@ func processMessage(value []byte) error {
 
 	err = processServiceTask(msg)
 	if err != nil {
-		objectId, err1 := bson.ObjectIDFromHex(msg.Id)
-		if err1 != nil {
-			log.Printf("Error converting job ID to ObjectID: %v", err1)
-			return err1
-		}
+		log.Printf("Error processing service task: %v", err)
 		data.SetJobStatus(objectId, "failed")
 	}
-
+	if err := data.SetJobStatus(objectId, "done"); err != nil {
+		log.Printf("Error setting job status: %v", err)
+		return err
+	}
 	log.Printf("Processed job: %+v", msg.Service)
 	return nil
 }

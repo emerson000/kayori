@@ -26,7 +26,7 @@ type JobUpdate struct {
 }
 
 func SetJobStatus(jobId bson.ObjectID, status string) error {
-	if status != "failed" && status != "done" {
+	if status != "failed" && status != "done" && status != "in_progress" {
 		return fmt.Errorf("invalid status: %s", status)
 	}
 	job := JobUpdate{Status: status}

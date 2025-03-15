@@ -5,7 +5,6 @@ import (
 	"log"
 	"sync"
 
-	"go.mongodb.org/mongo-driver/v2/bson"
 	"kayori.io/drone/internal/data"
 )
 
@@ -64,16 +63,6 @@ func ProcessTask(jobId string, task *Task, postJSON func(url string, data interf
 			}(currentJob)
 		}
 		wg.Wait()
-	}
-	objectID, err := bson.ObjectIDFromHex(jobId)
-	if err != nil {
-		log.Printf("Invalid job ID: %v", err)
-		return err
-	}
-	err = data.SetJobStatus(objectID, "done")
-	if err != nil {
-		log.Printf("Error setting job status: %v", err)
-		return err
 	}
 	return nil
 }
