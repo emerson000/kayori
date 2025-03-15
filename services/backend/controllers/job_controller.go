@@ -40,6 +40,7 @@ func CreateJob(db *mongo.Database, kafkaWriter *kafka.Writer) fiber.Handler {
 
 		err = kafkaWriter.WriteMessages(context.Background(),
 			kafka.Message{
+				Key:   []byte(job.Service),
 				Value: jobData,
 			},
 		)

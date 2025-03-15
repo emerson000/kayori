@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/segmentio/kafka-go"
 )
@@ -21,9 +22,13 @@ func (c *Consumer) Start(processMessage func([]byte)) error {
 	}
 
 	r := kafka.NewReader(kafka.ReaderConfig{
-		Brokers: []string{broker},
-		GroupID: "drone-workers",
-		Topic:   "drone-dispatch",
+		Brokers:          []string{broker},
+		GroupID:          "drone-workers",
+		Topic:            "drone-dispatch",
+		CommitInterval:   time.Second * 10,
+		StartOffset:      kafka.FirstOffset,
+		ReadBatchTimeout: 200 * time.Millisecond,
+		RebalanceTimeout: 5 * time.Second,
 	})
 	defer r.Close()
 
