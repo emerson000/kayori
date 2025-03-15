@@ -1,10 +1,10 @@
 import Link from "next/link";
 
 const navItems = [
-  <li><Link href="/">Home</Link></li>,
-  <li><Link href="/collect">Collect</Link></li>,
-  <li><Link href="/process">Process</Link></li>,
-  <li><Link href="/analyze">Analyze</Link></li>
+  { label: "Home", href: "/" },
+  { label: "Collect", href: "/collect" },
+  { label: "Process", href: "/process" },
+  { label: "Analyze", href: "/analyze" },
 ]
 
 export function NavBar() {
@@ -25,7 +25,9 @@ export function NavBar() {
       </label>
       <Link href="/" className="btn btn-ghost text-xl">Kayori</Link>
       <ul className="menu menu-horizontal px-1 hidden lg:flex">
-        {navItems && navItems.map((item) => item)}
+        {navItems && navItems.map((item) => <li>
+          <Link href={item.href} key={item.href}>{item.label}</Link>
+        </li>)}
       </ul>
     </div>
   </div >
@@ -41,7 +43,9 @@ export function BodyWithSidebar(props: { children: React.ReactNode }) {
     <div className="drawer-side">
       <label htmlFor="my-drawer-3" aria-label="close sidebar" className="drawer-overlay"></label>
       <ul className="menu bg-base-200 min-h-full w-80 p-4">
-        {navItems && navItems.map((item) => item)}
+        {navItems && navItems.map((item) => <li>
+          <Link href={item.href} key={item.href}>{item.label}</Link>
+        </li>)}
       </ul>
     </div>
   </div>
