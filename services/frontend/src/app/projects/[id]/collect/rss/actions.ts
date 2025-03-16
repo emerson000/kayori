@@ -1,9 +1,9 @@
 'use server'
 
 import { redirect } from "next/navigation";
-import { postTask } from "../../../utils/shared";
+import { postTask } from "@/utils/shared";
 
-export async function createRssFeed(formData: FormData) {
+export async function createRssFeed(formData: FormData, id: string) {
     const title = formData.get('title') as string;
     const urls = (formData.getAll('urls[]') as string[]).filter((url) => url.length > 0);
     const schedule = {
@@ -12,5 +12,5 @@ export async function createRssFeed(formData: FormData) {
         interval: formData.get('interval') as string,
     }
     const jobId = await postTask('collect', 'rss', title, { urls }, schedule);
-    redirect(`/collect/${jobId}`);
+    redirect(`/projects/${id}/collect/${jobId}`);
 }

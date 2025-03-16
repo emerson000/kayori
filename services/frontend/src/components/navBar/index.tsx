@@ -2,9 +2,7 @@ import Link from "next/link";
 
 const navItems = [
   { label: "Home", href: "/" },
-  { label: "Collect", href: "/collect" },
-  { label: "Process", href: "/process" },
-  { label: "Analyze", href: "/analyze" },
+  { label: "Projects", href: "/projects" },
 ]
 
 export function NavBar() {
@@ -25,8 +23,8 @@ export function NavBar() {
       </label>
       <Link href="/" className="btn btn-ghost text-xl">Kayori</Link>
       <ul className="menu menu-horizontal px-1 hidden lg:flex">
-        {navItems && navItems.map((item) => <li>
-          <Link href={item.href} key={item.href}>{item.label}</Link>
+        {navItems && navItems.map((item) => <li key={item.href}>
+          <Link href={item.href}>{item.label}</Link>
         </li>)}
       </ul>
     </div>

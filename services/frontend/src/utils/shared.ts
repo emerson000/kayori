@@ -27,7 +27,7 @@ export async function postTask(category: string, service: string, title: string,
     return resultJson.id;
 }
 
-export async function getJobArtifacts(jobId: string): Promise<object> {
+export async function getJobArtifacts(jobId: string): Promise<object[]> {
     const path = await getApiHostname() + '/api/jobs/' + jobId + '/artifacts';
     const response = await fetch(path);
     return await response.json();

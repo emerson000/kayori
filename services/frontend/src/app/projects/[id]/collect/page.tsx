@@ -1,15 +1,24 @@
 import Link from "next/link";
-import { getJobs } from "../../services/jobService";
-import { IJob } from "../../models/job";
+import { getProject } from "@/services/projectService";
+import { getJobs } from "../../../../services/jobService";
+import { IJob } from "../../../../models/job";
+import { notFound } from "next/navigation";
+import ProjectHeader from "@/components/projects/projectHeader";
 
 export const dynamic = 'force-dynamic'
 
-export default async function Page() {
+export default async function Page({ params }: { params: Promise<{id: string}> }) {
+    const { id } = await params;
     const jobs: IJob[] = await getJobs('collect');
+    const project = await getProject(id);
+    if (!project) {
+        notFound();
+    }
     return <div>
+        <ProjectHeader project={project} />
         <div className="overflow-x-auto">
             <ul className="menu menu-horizontal bg-base-200 float-right">
-                <li><Link href="/collect/new">New</Link></li>
+                <li><Link href={`/projects/${id}/collect/new`}>New</Link></li>
             </ul>
             <table className="table">
                 <thead>
@@ -30,7 +39,7 @@ export default async function Page() {
                                 </div>
                             </td>
                             <td>{job.service}</td>
-                            <td><Link className="btn" href={`/collect/${job.id}`}>View</Link></td>
+                            <td><Link className="btn" href={`/projects/${id}/collect/${job.id}`}>View</Link></td>
                         </tr>
                     ))}
                 </tbody>

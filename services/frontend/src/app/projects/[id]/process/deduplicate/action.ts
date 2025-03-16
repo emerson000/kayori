@@ -1,7 +1,7 @@
 'use server'
 
 import { redirect } from "next/navigation";
-import { postTask } from "../../../utils/shared";
+import { postTask } from "../../../../../utils/shared";
 
 export async function createDeduplicateTask(formData: FormData) {
     const field = formData.get('field') as string;

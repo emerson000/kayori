@@ -1,14 +1,17 @@
 'use client'
 
 import Form from "next/form";
-import { searchNews } from "./actions";
 import { useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 
 interface SearchBarProps {
     search: string;
+    className?: string;
+    id: string;
 }
 
-export default function SearchBar({ search }: SearchBarProps) {
+export default function SearchBar({ search, className, id }: SearchBarProps) {
+    const router = useRouter();
     const inputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
@@ -27,7 +30,13 @@ export default function SearchBar({ search }: SearchBarProps) {
         };
     }, []);
 
-    return <Form action={searchNews}>
-        <input ref={inputRef} type="text" placeholder="Search" name="search" className="input float-right mb-4" defaultValue={search} />
+    const handleSubmit = async (formData: FormData, id: string) => {
+        const search = formData.get('search') as string;
+        router.push(`/projects/${id}/analyze/news?search=${search}`);
+        inputRef.current?.blur();
+    }
+
+    return <Form action={(formData) => handleSubmit(formData, id)} className={className}>
+        <input ref={inputRef} type="text" placeholder="Search" name="search" className="input w-full" defaultValue={search} />
     </Form>
 }

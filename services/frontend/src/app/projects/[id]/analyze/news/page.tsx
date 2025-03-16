@@ -1,18 +1,28 @@
 import Link from "next/link";
-import MessageCard from "../../../components/MessageCard";
-import { getNews } from "../../../services/newsService";
+import MessageCard from "@/components/MessageCard";
+import { getNews } from "@/services/newsService";
 import SearchBar from "./searchBar";
-import { NewsArticle } from "../../../models/newsArticle";
-
-export default async function Page({ searchParams }: { searchParams: Promise<{ [key: string]: string | string[] | undefined }> }) {
+import { NewsArticle } from "@/models/newsArticle";
+import { getProject } from "@/services/projectService";
+import ProjectHeader from "@/components/projects/projectHeader";
+import { notFound } from "next/navigation";
+export default async function Page({ params, searchParams }: { params: Promise<{ id: string }>, searchParams: Promise<{ [key: string]: string | string[] | undefined }> }) {
+    const { id } = await params;
+    const project = await getProject(id);
     const { page = '1', search } = await searchParams;
     const pageNumber = parseInt(page as string);
     const articles = await getNews(pageNumber, search as string);
     const searchEncoded = encodeURIComponent(search as string);
+    if (!project) {
+        notFound();
+    }
     return (
         <div>
+            <ProjectHeader
+                project={project}
+                actions={<SearchBar search={search as string} className="mt-2 w-full lg:w-1/4" id={id} />}
+            />
             <h1 className="text-2xl font-bold">News</h1>
-            <SearchBar search={search as string} />
             <div className="clear-both">
                 {pageNumber > 1 && <Link className="btn float-left" href={`?page=${pageNumber - 1}${search ? `&search=${searchEncoded}` : ''}`}>Previous</Link>}
                 <Link className="btn float-right" href={`?page=${pageNumber + 1}${search ? `&search=${searchEncoded}` : ''}`}>Next</Link>
