@@ -129,13 +129,15 @@ func GetJobByID(db *mongo.Database) fiber.Handler {
 	}
 }
 
-func UpdateJob(db *mongo.Database) fiber.Handler {
+func UpdateJob(db *mongo.Database, requireProject bool) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var projectObjectId bson.ObjectID
-		if err := GetObjectIdFromParam(c, "project_id", &projectObjectId); err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"error": err.Error(),
-			})
+		if requireProject {
+			if err := GetObjectIdFromParam(c, "project_id", &projectObjectId); err != nil {
+				return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+					"error": err.Error(),
+				})
+			}
 		}
 		var job models.Job
 		if err := c.BodyParser(&job); err != nil {
@@ -152,8 +154,10 @@ func UpdateJob(db *mongo.Database) fiber.Handler {
 		}
 		job.ID = objID
 		updateStatement := bson.M{
-			"$set":      bson.M{},
-			"$addToSet": bson.M{"projects": projectObjectId},
+			"$set": bson.M{},
+		}
+		if requireProject {
+			updateStatement["$addToSet"].(bson.M)["projects"] = projectObjectId
 		}
 		if job.Title != "" {
 			updateStatement["$set"].(bson.M)["title"] = job.Title
