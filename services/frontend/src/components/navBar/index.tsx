@@ -41,8 +41,8 @@ export function BodyWithSidebar(props: { children: React.ReactNode }) {
     <div className="drawer-side">
       <label htmlFor="my-drawer-3" aria-label="close sidebar" className="drawer-overlay"></label>
       <ul className="menu bg-base-200 min-h-full w-80 p-4">
-        {navItems && navItems.map((item) => <li>
-          <Link href={item.href} key={item.href}>{item.label}</Link>
+        {navItems && navItems.map((item) => <li key={item.href}>
+          <Link href={item.href}>{item.label}</Link>
         </li>)}
       </ul>
     </div>
