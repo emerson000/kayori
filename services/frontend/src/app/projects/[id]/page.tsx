@@ -4,13 +4,6 @@ import { getProject } from "@/services/projectService";
 import { IProject } from "@/models/project";
 import { notFound } from "next/navigation";
 
-export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
-    const { id } = await params;
-    return {
-        title: `Case #${id}`
-    }
-}
-
 export default async function ProjectPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
     const project = await getProject(id);
