@@ -10,10 +10,11 @@ import (
 
 func RegisterRoutes(app *fiber.App, db *mongo.Database, rdb *redis.Client, kafkaWriter *kafka.Writer, pubsub *redis.PubSub) {
 	app.Post("/api/jobs", controllers.CreateJob(db, kafkaWriter))
-	app.Get("/api/jobs", controllers.GetJobs(db))
-	app.Get("/api/jobs/:id", controllers.GetJobByID(db))
-	app.Put("/api/jobs/:id", controllers.UpdateJob(db))
-	app.Get("/api/jobs/:id/artifacts", controllers.GetJobArtifacts(db))
+
+	app.Get("/api/projects/:project_id/jobs", controllers.GetJobs(db))
+	app.Get("/api/projects/:project_id/jobs/:id", controllers.GetJobByID(db))
+	app.Put("/api/projects/:project_id/jobs/:id", controllers.UpdateJob(db))
+	app.Get("/api/projects/:project_id/jobs/:id/artifacts", controllers.GetJobArtifacts(db))
 
 	app.Post("/api/entities/news_articles", controllers.CreateNewsArticle(db, rdb))
 	app.Get("/api/entities/news_articles", controllers.GetNewsArticles(db))

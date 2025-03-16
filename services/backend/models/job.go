@@ -9,11 +9,12 @@ import (
 
 type Job struct {
 	mongorm.Model `bson:",inline"`
-	Title         string `bson:"title" json:"title"`
-	Service       string `bson:"service" json:"service"`
-	Category      string `bson:"category" json:"category"`
-	Status        string `bson:"status" json:"status"`
-	Task          bson.D `bson:"task" json:"task"`
+	Title         string          `bson:"title" json:"title"`
+	Service       string          `bson:"service" json:"service"`
+	Category      string          `bson:"category" json:"category"`
+	Status        string          `bson:"status" json:"status"`
+	Task          bson.D          `bson:"task" json:"task"`
+	Projects      []bson.ObjectID `bson:"projects" json:"projects"`
 	Schedule      *struct {
 		Schedule bool      `bson:"schedule" json:"schedule"`
 		Duration int       `bson:"duration" json:"duration"`

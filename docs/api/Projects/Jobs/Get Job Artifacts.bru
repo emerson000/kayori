@@ -1,0 +1,16 @@
+meta {
+  name: Get Job Artifacts
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://localhost:3000/api/projects/:project_id/jobs/:job/artifacts
+  body: none
+  auth: none
+}
+
+params:path {
+  job: 67bb5c8eba2001d35f56aef7
+  project_id: 67d6c335863e79ad14fb61b3
+}

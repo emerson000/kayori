@@ -2,6 +2,8 @@ package controllers
 
 import (
 	"context"
+	"errors"
+	"fmt"
 
 	"github.com/gofiber/fiber/v2"
 	"go.mongodb.org/mongo-driver/v2/bson"
@@ -39,4 +41,35 @@ func BuildCreateIndexRoute(db *mongo.Database, collectionName string) fiber.Hand
 			"message": "Index created successfully",
 		})
 	}
+}
+
+func GetObjectIdFromParam(c *fiber.Ctx, param string, out *bson.ObjectID) error {
+	id := c.Params(param)
+	if id == "" {
+		return errors.New("A " + param + " ID is required")
+	}
+	objID, err := bson.ObjectIDFromHex(id)
+	if err != nil {
+		return errors.New("Invalid " + param + " ID")
+	}
+	*out = objID
+	return nil
+}
+
+func AddPaginationToFindOptions(c *fiber.Ctx, findOptions *options.FindOptionsBuilder) {
+	_, limit, skip := GetPaginationParams(c)
+	findOptions.SetSkip(skip).SetLimit(int64(limit))
+}
+
+func GetPaginationParams(c *fiber.Ctx) (int, int, int64) {
+	page := c.QueryInt("page", 1)
+	limit := c.QueryInt("limit", 10)
+	skip := (page - 1) * limit
+	return page, limit, int64(skip)
+}
+
+func SetHasMoreHeader(c *fiber.Ctx, total int) {
+	_, limit, _ := GetPaginationParams(c)
+	hasMore := total == limit
+	c.Set("X-Has-More", fmt.Sprintf("%v", hasMore))
 }
