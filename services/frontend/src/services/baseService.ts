@@ -1,16 +1,18 @@
 export abstract class BaseService {
     protected apiUrl: string;
+    protected initialized: boolean = false;
 
     constructor(apiUrl: string) {
         this.apiUrl = apiUrl;
     }
 
-    protected async get<T>(id?: string): Promise<T> {
+    protected async get<T>(id?: string, urlOverride?: string): Promise<T> {
         if (process.env.SKIP_API_CALL == 'true') {
             return null as T;
         }
         try {
-            const url = id ? `${this.apiUrl}/${id}` : this.apiUrl;
+            const baseUrl = urlOverride || this.apiUrl;
+            const url = id ? `${baseUrl}/${id}` : baseUrl;
             const response = await fetch(url);
             if (!response.ok) {
                 throw new Error('Network response was not ok');
@@ -22,11 +24,12 @@ export abstract class BaseService {
         }
     }
 
-    protected async getAll<T>(page?: number, perPage?: number): Promise<T> {
+    protected async getAll<T>(page?: number, perPage?: number, urlOverride?: string): Promise<T> {
         if (process.env.SKIP_API_CALL == 'true') {
             return null as T;
         }
-        const url = `${this.apiUrl}?page=${page}&per_page=${perPage}`;
+        const baseUrl = urlOverride || this.apiUrl;
+        const url = `${baseUrl}?page=${page}&per_page=${perPage}`;
         const response = await fetch(url);
         if (!response.ok) {
             throw new Error('Network response was not ok');
@@ -34,12 +37,13 @@ export abstract class BaseService {
         return await response.json();
     }
 
-    protected async post<T>(data: any): Promise<T> {
+    protected async post<T>(data: any, urlOverride?: string): Promise<T> {
         if (process.env.SKIP_API_CALL == 'true') {
             return null as T;
         }
         try {
-            const response = await fetch(this.apiUrl, {
+            const url = urlOverride || this.apiUrl;
+            const response = await fetch(url, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -56,12 +60,13 @@ export abstract class BaseService {
         }
     }
 
-    protected async put<T>(id: string, data: any): Promise<T> {
+    protected async put<T>(id: string, data: any, urlOverride?: string): Promise<T> {
         if (process.env.SKIP_API_CALL == 'true') {
             return null as T;
         }
         try {
-            const response = await fetch(`${this.apiUrl}/${id}`, {
+            const baseUrl = urlOverride || this.apiUrl;
+            const response = await fetch(`${baseUrl}/${id}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -78,12 +83,13 @@ export abstract class BaseService {
         }
     }
 
-    protected async delete(id: string): Promise<boolean> {
+    protected async delete(id: string, urlOverride?: string): Promise<boolean> {
         if (process.env.SKIP_API_CALL == 'true') {
             return true;
         }
         try {
-            const response = await fetch(`${this.apiUrl}/${id}`, {
+            const baseUrl = urlOverride || this.apiUrl;
+            const response = await fetch(`${baseUrl}/${id}`, {
                 method: 'DELETE',
             });
             if (!response.ok) {
@@ -95,4 +101,4 @@ export abstract class BaseService {
             throw error;
         }
     }
-} 
+}

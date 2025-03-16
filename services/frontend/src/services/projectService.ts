@@ -5,11 +5,10 @@ import { getApiHostname } from '../utils/shared';
 import { BaseService } from './baseService';
 
 class ProjectService extends BaseService {
-    private static instance: ProjectService;
-    private initialized: boolean = false;
+    public static instance: ProjectService;
 
-    private constructor() {
-        super(''); // Initialize with empty string
+    protected constructor() {
+        super('');
     }
 
     public static async getInstance(): Promise<ProjectService> {
@@ -22,7 +21,7 @@ class ProjectService extends BaseService {
         return ProjectService.instance;
     }
 
-    async getProjects(page: number = 1, perPage: number = 100): Promise<IProject[]> {
+    async getProjects(page: number = 1, perPage: number = 10): Promise<IProject[]> {
         const data = await this.getAll<any[]>(page, perPage);
         return data.map(project => new Project(project));
     }

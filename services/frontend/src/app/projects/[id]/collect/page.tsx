@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { getProject } from "@/services/projectService";
-import { getJobs } from "../../../../services/jobService";
-import { IJob } from "../../../../models/job";
+import { getJobs } from "@/services/jobService";
+import { IJob } from "@/models/job";
 import { notFound } from "next/navigation";
 import ProjectHeader from "@/components/projects/projectHeader";
 
@@ -9,7 +9,7 @@ export const dynamic = 'force-dynamic'
 
 export default async function Page({ params }: { params: Promise<{id: string}> }) {
     const { id } = await params;
-    const jobs: IJob[] = await getJobs('collect');
+    const jobs: IJob[] = await getJobs(id);
     const project = await getProject(id);
     if (!project) {
         notFound();

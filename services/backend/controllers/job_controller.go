@@ -195,7 +195,11 @@ func GetJobArtifacts(db *mongo.Database) fiber.Handler {
 			"job_id":  objID,
 			"deleted": bson.M{"$ne": true},
 		}
-		cursor, err := collection.Find(context.Background(), filters)
+		findOptions := options.Find().SetSort(bson.M{
+			"created_at": -1,
+		})
+		AddPaginationToFindOptions(c, findOptions)
+		cursor, err := collection.Find(context.Background(), filters, findOptions)
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"error": err.Error(),
@@ -206,6 +210,8 @@ func GetJobArtifacts(db *mongo.Database) fiber.Handler {
 				"error": err.Error(),
 			})
 		}
+
+		SetHasMoreHeader(c, len(artifacts))
 
 		for i := range artifacts {
 			for j := range artifacts[i] {
