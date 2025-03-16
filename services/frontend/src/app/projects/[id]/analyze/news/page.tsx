@@ -21,6 +21,7 @@ export default async function Page({ params, searchParams }: { params: Promise<{
             <ProjectHeader
                 project={project}
                 actions={<SearchBar search={search as string} className="mt-2 w-full lg:w-1/4" id={id} />}
+                currentPage="analyze"
             />
             <h1 className="text-2xl font-bold">News</h1>
             <div className="clear-both">

@@ -15,7 +15,7 @@ export default async function Page({ params }: { params: Promise<{id: string}> }
         notFound();
     }
     return <div>
-        <ProjectHeader project={project} />
+        <ProjectHeader project={project} currentPage="collect" />
         <div className="overflow-x-auto">
             <ul className="menu menu-horizontal bg-base-200 float-right">
                 <li><Link href={`/projects/${id}/collect/new`}>New</Link></li>

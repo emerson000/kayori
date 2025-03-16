@@ -13,7 +13,7 @@ export default async function Page({ params }: { params: Promise<{ id: string, j
   const artifacts = await getJobArtifacts(job);
 
   return <div>
-    {project && <ProjectHeader project={project} />}
+    {project && <ProjectHeader project={project} currentPage="collect" />}
     {artifacts.map((message: any, i: number) => <MessageCard key={i} message={message} />)}
   </div>
 }

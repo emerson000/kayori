@@ -10,7 +10,7 @@ export default async function Page({ params }: { params: Promise<{id: string}> }
     }
     return (
         <div>
-            <ProjectHeader project={project} />
+            <ProjectHeader project={project} currentPage="analyze" />
             <div className="card bg-base-200 w-96 shadow-sm">
                 <div className="card-body">
                     <h2 className="card-title">News Articles</h2>

@@ -17,7 +17,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
     notFound();
   }
   return (<div>
-    <ProjectHeader project={project} />
+    <ProjectHeader project={project} currentPage="collect" />
     <div className="flex flex-wrap">
       {sources.map((source, index) => (
         <div className="flex-1" key={index}>

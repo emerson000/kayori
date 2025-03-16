@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation';
 import { getProject } from '@/services/projectService';
 import ProjectHeader from '@/components/projects/projectHeader';
-import RssForm from './RssForm';
+import RssForm from './rssForm';
 
 export default async function Page({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -11,7 +11,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
   }
 
   return <div>
-    <ProjectHeader project={project} />
+    <ProjectHeader project={project} currentPage="collect" />
     <h1 className="text-4xl font-bold">RSS</h1>
     <div className="m-4">
       <RssForm id={id} />

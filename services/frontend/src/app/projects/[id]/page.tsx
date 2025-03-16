@@ -18,7 +18,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
         notFound();
     }
     return <div>
-        <ProjectHeader project={project} />
+        <ProjectHeader project={project} currentPage="" />
         <div className="w-full overflow-x-auto pt-2 pb-1 px-1">
             <div className="stats shadow outline outline-base-300 flex flex-row">
                 <a className="stat basis-40 hover:bg-base-200 active:bg-base-300" href="#">
