@@ -80,3 +80,16 @@ func UpdateProject(db *mongo.Database) fiber.Handler {
 		return c.Status(fiber.StatusOK).JSON(project)
 	}
 }
+
+func GetProjects(db *mongo.Database) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		var projects []models.Project
+		err := (&models.Project{}).ReadAll(context.Background(), db, "projects", bson.M{}, &projects, nil)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": err.Error(),
+			})
+		}
+		return c.Status(fiber.StatusOK).JSON(projects)
+	}
+}
