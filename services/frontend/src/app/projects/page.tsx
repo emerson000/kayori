@@ -4,7 +4,10 @@ import Link from "next/link";
 export default async function ProjectsPage() {
     const projects = await getProjects();
     return <div className="p-4">
-        <h1 className="text-2xl font-bold">Projects</h1>
+        <div className="flex justify-between">
+            <h1 className="text-2xl font-bold">Projects</h1>
+            <a href="/projects/new" className="btn">New</a>
+        </div>
         <div className="overflow-x-auto">
             <table className="table table-zebra">
                 <thead>

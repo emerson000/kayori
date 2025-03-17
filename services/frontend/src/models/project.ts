@@ -1,5 +1,11 @@
 import { IBaseModel, BaseModel } from "./baseModel";
 
+export const ProjectStatus = {
+    pending_start: { label: 'Pending Start', className: 'ghost' },
+    in_progress: { label: 'In Progress', className: 'success' },
+    closed: { label: 'Closed', className: 'ghost', }
+}
+
 export interface IProject extends IBaseModel {
     title: string;
     description: string;
@@ -28,7 +34,7 @@ export class Project extends BaseModel implements IProject {
         description: string,
         number: string,
         status: string
-        }) {
+    }) {
         super({ id, created_at, updated_at });
         this.title = title;
         this.description = description;
@@ -36,7 +42,7 @@ export class Project extends BaseModel implements IProject {
         this.status = status;
     }
 
-    getDocumentTitle() : string {
+    getDocumentTitle(): string {
         return `${this.number}: ${this.title}`;
     }
 }

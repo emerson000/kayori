@@ -31,12 +31,12 @@ class ProjectService extends BaseService {
         return data ? new Project(data) : null;
     }
 
-    async createProject(projectData: Omit<IProject, 'id' | 'created_at' | 'updated_at'>): Promise<IProject | null> {
+    async createProject(projectData: Omit<IProject, 'id' | 'created_at' | 'updated_at' | 'getDocumentTitle'>): Promise<IProject | null> {
         const data = await this.post<any>(projectData);
         return data ? new Project(data) : null;
     }
 
-    async updateProject(id: string, projectData: Partial<Omit<IProject, 'id' | 'created_at' | 'updated_at'>>): Promise<IProject | null> {
+    async updateProject(id: string, projectData: Partial<Omit<IProject, 'id' | 'created_at' | 'updated_at' | 'getDocumentTitle'>>): Promise<IProject | null> {
         const data = await this.put<any>(id, projectData);
         return data ? new Project(data) : null;
     }
@@ -66,12 +66,12 @@ export const getProject = async (id: string) => {
     return service.getProject(id);
 };
 
-export const createProject = async (projectData: Omit<IProject, 'id' | 'created_at' | 'updated_at'>) => {
+export const createProject = async (projectData: Omit<IProject, 'id' | 'created_at' | 'updated_at' | 'getDocumentTitle'>) => {
     const service = await getProjectService();
     return service.createProject(projectData);
 };
 
-export const updateProject = async (id: string, projectData: Partial<Omit<IProject, 'id' | 'created_at' | 'updated_at'>>) => {
+export const updateProject = async (id: string, projectData: Partial<Omit<IProject, 'id' | 'created_at' | 'updated_at' | 'getDocumentTitle'>>) => {
     const service = await getProjectService();
     return service.updateProject(id, projectData);
 };
