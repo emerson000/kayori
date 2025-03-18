@@ -1,17 +1,17 @@
 import Link from "next/link";
 import MessageCard from "@/components/MessageCard";
-import { getNews } from "@/services/newsService";
 import SearchBar from "./searchBar";
 import { NewsArticle } from "@/models/newsArticle";
 import { getProject } from "@/services/projectService";
 import ProjectHeader from "@/components/projects/projectHeader";
 import { notFound } from "next/navigation";
+import { getArtifacts } from "@/services/artifactService";
 export default async function Page({ params, searchParams }: { params: Promise<{ id: string }>, searchParams: Promise<{ [key: string]: string | string[] | undefined }> }) {
     const { id } = await params;
     const project = await getProject(id);
     const { page = '1', search } = await searchParams;
     const pageNumber = parseInt(page as string);
-    const articles = await getNews(pageNumber, search as string);
+    const articles = await getArtifacts(id, "news_article", pageNumber, 10);
     const searchEncoded = encodeURIComponent(search as string);
     if (!project) {
         notFound();

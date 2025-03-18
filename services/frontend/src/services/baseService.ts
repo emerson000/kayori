@@ -24,12 +24,20 @@ export abstract class BaseService {
         }
     }
 
-    protected async getAll<T>(page?: number, perPage?: number, urlOverride?: string): Promise<T> {
+    protected async getAll<T>(page?: number, perPage?: number, urlOverride?: string, queryParams?: Record<string, string>): Promise<T> {
         if (process.env.SKIP_API_CALL == 'true') {
             return null as T;
         }
         const baseUrl = urlOverride || this.apiUrl;
-        const url = `${baseUrl}?page=${page}&per_page=${perPage}`;
+        let queryString = queryParams ? `?${new URLSearchParams(queryParams).toString()}` : '?';
+        if (page) {
+            queryString += `&page=${page}`;
+        }
+        if (perPage) {
+            queryString += `&per_page=${perPage}`;
+        }
+        const url = `${baseUrl}${queryString}`;
+        console.log(url);
         const response = await fetch(url);
         if (!response.ok) {
             throw new Error('Network response was not ok');

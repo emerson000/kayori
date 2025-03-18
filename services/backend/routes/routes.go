@@ -39,4 +39,5 @@ func RegisterRoutes(app *fiber.App, db *mongo.Database, rdb *redis.Client, kafka
 	app.Get("/api/projects/:id", controllers.GetProject(db))
 	app.Put("/api/projects/:id", controllers.UpdateProject(db))
 	app.Get("/api/projects", controllers.GetProjects(db))
+	app.Get("/api/projects/:id/artifacts", controllers.GetProjectArtifacts(db))
 }
