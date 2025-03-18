@@ -88,6 +88,9 @@ func (m *Model) Update(ctx context.Context, db *mongo.Database, collectionName s
 		setMap = bson.M{}
 		updateMap["$set"] = setMap
 	}
+	delete(setMap, "id")
+	delete(setMap, "_id")
+	delete(setMap, "created_at")
 	setMap["updated_at"] = m.UpdatedAt
 	_, err := collection.UpdateOne(ctx, bson.M{"_id": m.ID}, update)
 	if err != nil {

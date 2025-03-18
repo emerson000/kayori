@@ -71,7 +71,14 @@ func UpdateProject(db *mongo.Database) fiber.Handler {
 			})
 		}
 		project.ID = objectID
-		updateStatement := bson.M{"$set": project}
+
+		updateStatement, err := CreateUpdateStatement(project)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": err.Error(),
+			})
+		}
+
 		if err := project.Update(context.Background(), db, "projects", updateStatement); err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"error": err.Error(),

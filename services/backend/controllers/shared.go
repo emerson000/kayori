@@ -73,3 +73,19 @@ func SetHasMoreHeader(c *fiber.Ctx, total int) {
 	hasMore := total == limit
 	c.Set("X-Has-More", fmt.Sprintf("%v", hasMore))
 }
+
+func CreateUpdateStatement(model interface{}) (bson.M, error) {
+	modelMap := bson.M{}
+	modelBytes, err := bson.Marshal(model)
+	if err != nil {
+		return nil, err
+	}
+	bson.Unmarshal(modelBytes, &modelMap)
+	delete(modelMap, "id")
+	delete(modelMap, "_id")
+	delete(modelMap, "created_at")
+	statement := bson.M{
+		"$set": modelMap,
+	}
+	return statement, nil
+}

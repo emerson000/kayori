@@ -66,6 +66,7 @@ export abstract class BaseService {
         }
         try {
             const baseUrl = urlOverride || this.apiUrl;
+            console.log({baseUrl, id, data})
             const response = await fetch(`${baseUrl}/${id}`, {
                 method: 'PUT',
                 headers: {
