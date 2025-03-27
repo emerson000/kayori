@@ -40,4 +40,5 @@ func RegisterRoutes(app *fiber.App, db *mongo.Database, rdb *redis.Client, kafka
 	app.Put("/api/projects/:id", controllers.UpdateProject(db))
 	app.Get("/api/projects", controllers.GetProjects(db))
 	app.Get("/api/projects/:id/artifacts", controllers.GetProjectArtifacts(db))
+	app.Delete("/api/projects/:id", controllers.DeleteProject(db))
 }

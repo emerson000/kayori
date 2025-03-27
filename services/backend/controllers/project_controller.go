@@ -198,3 +198,30 @@ func GetProjectArtifacts(db *mongo.Database) fiber.Handler {
 		return c.Status(fiber.StatusOK).JSON(resultsSlice)
 	}
 }
+
+func DeleteProject(db *mongo.Database) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		id := c.Params("id")
+		if id == "" {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "Project ID is required",
+			})
+		}
+		objectID, err := bson.ObjectIDFromHex(id)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "Invalid project ID",
+			})
+		}
+		project := &models.Project{}
+		project.ID = objectID
+		if err := project.Delete(context.Background(), db, "projects"); err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": err.Error(),
+			})
+		}
+		return c.Status(fiber.StatusOK).JSON(fiber.Map{
+			"message": "Project deleted successfully",
+		})
+	}
+}
