@@ -8,7 +8,7 @@ export abstract class BaseService {
 
     protected async get<T>(id?: string, urlOverride?: string): Promise<T> {
         if (process.env.SKIP_API_CALL == 'true') {
-            return null as T;
+            return {} as T;
         }
         try {
             const baseUrl = urlOverride || this.apiUrl;
@@ -26,7 +26,7 @@ export abstract class BaseService {
 
     protected async getAll<T>(page?: number, perPage?: number, urlOverride?: string, queryParams?: Record<string, string>): Promise<T> {
         if (process.env.SKIP_API_CALL == 'true') {
-            return null as T;
+            return [] as T;
         }
         const baseUrl = urlOverride || this.apiUrl;
         let queryString = queryParams ? `?${new URLSearchParams(queryParams).toString()}` : '?';
@@ -47,7 +47,7 @@ export abstract class BaseService {
 
     protected async post<T>(data: any, urlOverride?: string): Promise<T> {
         if (process.env.SKIP_API_CALL == 'true') {
-            return null as T;
+            return {} as T;
         }
         try {
             const url = urlOverride || this.apiUrl;
@@ -70,7 +70,7 @@ export abstract class BaseService {
 
     protected async put<T>(id: string, data: any, urlOverride?: string): Promise<T> {
         if (process.env.SKIP_API_CALL == 'true') {
-            return null as T;
+            return {} as T;
         }
         try {
             const baseUrl = urlOverride || this.apiUrl;
