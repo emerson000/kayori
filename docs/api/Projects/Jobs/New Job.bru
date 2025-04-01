@@ -5,9 +5,13 @@ meta {
 }
 
 post {
-  url: http://{{host}}/api/jobs
+  url: http://{{host}}/api/projects/:id/jobs
   body: json
   auth: none
+}
+
+params:path {
+  id: 67d6c335863e79ad14fb61b3
 }
 
 body:json {
@@ -23,7 +27,7 @@ body:json {
     },
     "schedule": { 
       "schedule": true,
-      "duration": "1",
+      "duration": 1,
       "interval": "minutes"
     }
   }

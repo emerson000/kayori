@@ -9,9 +9,9 @@ import (
 )
 
 func RegisterRoutes(app *fiber.App, db *mongo.Database, rdb *redis.Client, kafkaWriter *kafka.Writer, pubsub *redis.PubSub) {
-	app.Post("/api/jobs", controllers.CreateJob(db, kafkaWriter))
 
 	app.Get("/api/projects/:project_id/jobs", controllers.GetJobs(db))
+	app.Post("/api/projects/:project_id/jobs", controllers.CreateJob(db, kafkaWriter))
 	app.Get("/api/projects/:project_id/jobs/:id", controllers.GetJobByID(db))
 	app.Put("/api/projects/:project_id/jobs/:id", controllers.UpdateJob(db, true))
 	app.Get("/api/projects/:project_id/jobs/:id/artifacts", controllers.GetJobArtifacts(db))

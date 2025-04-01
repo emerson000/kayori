@@ -21,6 +21,27 @@ func CreateJob(db *mongo.Database, kafkaWriter *kafka.Writer) fiber.Handler {
 				"error": err.Error(),
 			})
 		}
+
+		project := c.Params("project_id")
+		projectObjectId, err := bson.ObjectIDFromHex(project)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": err.Error(),
+			})
+		}
+
+		// Check if projectObjectId already exists in job.Projects
+		found := false
+		for _, p := range job.Projects {
+			if p == projectObjectId {
+				found = true
+				break
+			}
+		}
+		if !found {
+			job.Projects = append(job.Projects, projectObjectId)
+		}
+
 		if err := job.Create(context.Background(), db, "jobs", &job); err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"error": err.Error(),
