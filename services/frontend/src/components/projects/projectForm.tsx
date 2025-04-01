@@ -1,5 +1,6 @@
 import { ProjectStatus, Project } from "@/models/project";
 import Form from "next/form";
+import DeleteProjectButton from "./deleteProjectButton";
 
 interface ProjectFormProps {
     action: (formData: FormData) => Promise<void>;
@@ -45,8 +46,11 @@ export default function ProjectForm({ action, project }: ProjectFormProps) {
             <div className="validator-hint">Required</div>
         </fieldset>
         <div className="flex items-center mt-4 h-12 gap-2 justify-between">
-            <input type="submit" className="btn btn-primary h-full" defaultValue={project ? "Save" : "Create"} />
-            <a href="/projects" className="btn h-full">Cancel</a>
+            <input type="submit" className="btn btn-primary" defaultValue={project ? "Save" : "Create"} />
+            <div className="flex items-center gap-2 h-full">
+                {project && <DeleteProjectButton project={{ id: project.id, title: project.title, status: project.status }} />}
+                <a href="/projects" className="btn">Cancel</a>
+            </div>
         </div>
     </Form>
 }

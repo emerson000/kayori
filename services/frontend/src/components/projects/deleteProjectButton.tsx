@@ -23,7 +23,7 @@ export default function DeleteProjectButton({ project }: DeleteProjectButtonProp
         try {
             setIsDeleting(true);
             const success = await deleteProject(project.id);
-            
+
             if (success) {
                 // Redirect to projects list after successful deletion
                 router.push('/projects');
@@ -41,9 +41,10 @@ export default function DeleteProjectButton({ project }: DeleteProjectButtonProp
 
     return (
         <>
-            <button 
-                className="btn btn-sm btn-outline btn-base-200 btn-error"
+            <button
+                className="btn btn-outline btn-base-200 btn-error"
                 onClick={() => setShowDeleteModal(true)}
+                type="button"
             >
                 Delete
             </button>
@@ -54,25 +55,30 @@ export default function DeleteProjectButton({ project }: DeleteProjectButtonProp
                     <h3 className="font-bold text-lg">Delete Project</h3>
                     <p className="py-4">Are you sure you want to delete this project? This action cannot be undone.</p>
                     <div className="modal-action">
-                        <button 
-                            className="btn" 
+                        <button
+                            className="btn"
                             onClick={() => setShowDeleteModal(false)}
                             disabled={isDeleting}
+                            type="button"
                         >
                             Cancel
                         </button>
-                        <button 
-                            className="btn btn-error" 
+                        <button
+                            className="btn btn-error"
                             onClick={handleDelete}
                             disabled={isDeleting}
+                            type="button"
                         >
                             {isDeleting ? 'Deleting...' : 'Delete'}
                         </button>
                     </div>
                 </div>
-                <form method="dialog" className="modal-backdrop">
-                    <button onClick={() => setShowDeleteModal(false)} disabled={isDeleting}>close</button>
-                </form>
+                <div className="modal-backdrop">
+                    <button
+                        onClick={() => setShowDeleteModal(false)}
+                        disabled={isDeleting}
+                        type="button">close</button>
+                </div>
             </dialog>
         </>
     );

@@ -1,5 +1,4 @@
 import { IProject } from "@/models/project";
-import DeleteProjectButton from "./deleteProjectButton";
 
 const menuItems = [
     {
@@ -32,12 +31,6 @@ export default function ProjectHeader({
         actions?: React.ReactNode,
         currentPage: string
     }) {
-    // Create a plain object with only the necessary data
-    const projectData = {
-        id: project.id,
-        title: project.getDocumentTitle(),
-        status: project.status
-    };
 
     return <div>
         <div className="flex justify-between items-center outline outline-base-300 rounded-box p-2">
@@ -49,7 +42,6 @@ export default function ProjectHeader({
             </h1>
             <div className="flex gap-2">
                 <a href={`/projects/${project.id}/edit`} className="btn btn-sm btn-base-200">Edit</a>
-                <DeleteProjectButton project={projectData} />
             </div>
         </div>
         <div className="flex flex-col lg:flex-row justify-between">
