@@ -1,5 +1,6 @@
-export interface INewsArticle {
-    id: string;
+import { IBaseModel, BaseModel } from "./baseModel";
+
+export interface INewsArticle extends IBaseModel {
     title: string;
     description: string;
     entity_type: string;
@@ -16,8 +17,7 @@ export interface INewsArticle {
     cluster_articles?: INewsArticle[];
 }
 
-export class NewsArticle implements INewsArticle {
-    id: string;
+export class NewsArticle extends BaseModel implements INewsArticle {
     title: string;
     description: string;
     url: string;
@@ -35,6 +35,8 @@ export class NewsArticle implements INewsArticle {
 
     constructor({
         id,
+        created_at,
+        updated_at,
         title,
         description,
         entity_type,
@@ -47,9 +49,10 @@ export class NewsArticle implements INewsArticle {
         service_id,
         checksum,
         job_id,
-        cluster_id
+        cluster_id,
+        cluster_articles
     }: INewsArticle) {
-        this.id = id;
+        super({ id, created_at, updated_at });
         this.title = title;
         this.description = description;
         this.entity_type = entity_type;
@@ -63,6 +66,7 @@ export class NewsArticle implements INewsArticle {
         this.checksum = checksum;
         this.job_id = job_id;
         this.cluster_id = cluster_id;
+        this.cluster_articles = cluster_articles;
     }
 
     getSecondLevelDomain(): string {

@@ -1,0 +1,19 @@
+meta {
+  name: Get Project Artifacts
+  type: http
+  seq: 1
+}
+
+get {
+  url: http://{{host}}/api/projects/:id/artifacts?type=news_article
+  body: none
+  auth: none
+}
+
+params:query {
+  type: news_article
+}
+
+params:path {
+  id: 67d6c335863e79ad14fb61b3
+}

@@ -9,11 +9,14 @@ import (
 )
 
 func RegisterRoutes(app *fiber.App, db *mongo.Database, rdb *redis.Client, kafkaWriter *kafka.Writer, pubsub *redis.PubSub) {
-	app.Post("/api/jobs", controllers.CreateJob(db, kafkaWriter))
-	app.Get("/api/jobs", controllers.GetJobs(db))
-	app.Get("/api/jobs/:id", controllers.GetJobByID(db))
-	app.Put("/api/jobs/:id", controllers.UpdateJob(db))
-	app.Get("/api/jobs/:id/artifacts", controllers.GetJobArtifacts(db))
+
+	app.Get("/api/projects/:project_id/jobs", controllers.GetJobs(db))
+	app.Post("/api/projects/:project_id/jobs", controllers.CreateJob(db, kafkaWriter))
+	app.Get("/api/projects/:project_id/jobs/:id", controllers.GetJobByID(db))
+	app.Put("/api/projects/:project_id/jobs/:id", controllers.UpdateJob(db, true))
+	app.Get("/api/projects/:project_id/jobs/:id/artifacts", controllers.GetJobArtifacts(db))
+
+	app.Put("/api/jobs/:id", controllers.UpdateJob(db, false))
 
 	app.Post("/api/entities/news_articles", controllers.CreateNewsArticle(db, rdb))
 	app.Get("/api/entities/news_articles", controllers.GetNewsArticles(db))
@@ -31,4 +34,11 @@ func RegisterRoutes(app *fiber.App, db *mongo.Database, rdb *redis.Client, kafka
 
 	app.Get("/api/ws", controllers.WebSocketHandler(pubsub))
 	app.Get("/api/ws", controllers.WebSocketConnection(pubsub))
+
+	app.Post("/api/projects", controllers.CreateProject(db))
+	app.Get("/api/projects/:id", controllers.GetProject(db))
+	app.Put("/api/projects/:id", controllers.UpdateProject(db))
+	app.Get("/api/projects", controllers.GetProjects(db))
+	app.Get("/api/projects/:id/artifacts", controllers.GetProjectArtifacts(db))
+	app.Delete("/api/projects/:id", controllers.DeleteProject(db))
 }

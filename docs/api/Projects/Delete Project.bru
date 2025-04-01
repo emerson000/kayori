@@ -1,0 +1,15 @@
+meta {
+  name: Delete Project
+  type: http
+  seq: 5
+}
+
+delete {
+  url: http://{{host}}/api/projects/:id
+  body: none
+  auth: none
+}
+
+params:path {
+  id: 67d76c97a62189171ad8d7af
+}

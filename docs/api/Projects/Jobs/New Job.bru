@@ -1,0 +1,34 @@
+meta {
+  name: New Job
+  type: http
+  seq: 4
+}
+
+post {
+  url: http://{{host}}/api/projects/:id/jobs
+  body: json
+  auth: none
+}
+
+params:path {
+  id: 67d6c335863e79ad14fb61b3
+}
+
+body:json {
+  {
+    "title": "Testing",
+    "service": "rss",
+    "category": "collect",
+    "task": {
+      "urls":
+        [
+          "https://www.aljazeera.com/xml/rss/all.xml"
+      ]
+    },
+    "schedule": { 
+      "schedule": true,
+      "duration": 1,
+      "interval": "minutes"
+    }
+  }
+}

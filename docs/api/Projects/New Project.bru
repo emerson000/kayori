@@ -1,0 +1,19 @@
+meta {
+  name: New Project
+  type: http
+  seq: 3
+}
+
+post {
+  url: http://{{host}}/api/projects
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "title": "Financial Fraud Investigation",
+    "number": "2025-001",
+    "status": "in_progress"
+  }
+}

@@ -21,6 +21,27 @@ func CreateJob(db *mongo.Database, kafkaWriter *kafka.Writer) fiber.Handler {
 				"error": err.Error(),
 			})
 		}
+
+		project := c.Params("project_id")
+		projectObjectId, err := bson.ObjectIDFromHex(project)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": err.Error(),
+			})
+		}
+
+		// Check if projectObjectId already exists in job.Projects
+		found := false
+		for _, p := range job.Projects {
+			if p == projectObjectId {
+				found = true
+				break
+			}
+		}
+		if !found {
+			job.Projects = append(job.Projects, projectObjectId)
+		}
+
 		if err := job.Create(context.Background(), db, "jobs", &job); err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"error": err.Error(),
@@ -55,11 +76,20 @@ func CreateJob(db *mongo.Database, kafkaWriter *kafka.Writer) fiber.Handler {
 
 func GetJobs(db *mongo.Database) fiber.Handler {
 	return func(c *fiber.Ctx) error {
+		var projectId bson.ObjectID
+		if err := GetObjectIdFromParam(c, "project_id", &projectId); err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": err.Error(),
+			})
+		}
 		jobs := make([]models.Job, 0)
 		category := c.Query("category")
 		collection := db.Collection("jobs")
 		findOptions := options.Find().SetSort(bson.D{{Key: "title", Value: 1}})
-		filters := bson.M{}
+		AddPaginationToFindOptions(c, findOptions)
+		filters := bson.M{
+			"projects": projectId,
+		}
 		if category != "" {
 			filters["category"] = category
 		}
@@ -76,12 +106,19 @@ func GetJobs(db *mongo.Database) fiber.Handler {
 				"error": err.Error(),
 			})
 		}
+		SetHasMoreHeader(c, len(jobs))
 		return c.JSON(jobs)
 	}
 }
 
 func GetJobByID(db *mongo.Database) fiber.Handler {
 	return func(c *fiber.Ctx) error {
+		var projectObjectId bson.ObjectID
+		if err := GetObjectIdFromParam(c, "project_id", &projectObjectId); err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": err.Error(),
+			})
+		}
 		id := c.Params("id")
 		objID, err := bson.ObjectIDFromHex(id)
 		if err != nil {
@@ -91,7 +128,7 @@ func GetJobByID(db *mongo.Database) fiber.Handler {
 		}
 		collection := db.Collection("jobs")
 		var result bson.M
-		if err := collection.FindOne(context.TODO(), bson.M{"_id": objID}).Decode(&result); err != nil {
+		if err := collection.FindOne(context.TODO(), bson.M{"_id": objID, "projects": projectObjectId}).Decode(&result); err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"error": err.Error(),
 			})
@@ -113,8 +150,16 @@ func GetJobByID(db *mongo.Database) fiber.Handler {
 	}
 }
 
-func UpdateJob(db *mongo.Database) fiber.Handler {
+func UpdateJob(db *mongo.Database, requireProject bool) fiber.Handler {
 	return func(c *fiber.Ctx) error {
+		var projectObjectId bson.ObjectID
+		if requireProject {
+			if err := GetObjectIdFromParam(c, "project_id", &projectObjectId); err != nil {
+				return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+					"error": err.Error(),
+				})
+			}
+		}
 		var job models.Job
 		if err := c.BodyParser(&job); err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -131,6 +176,9 @@ func UpdateJob(db *mongo.Database) fiber.Handler {
 		job.ID = objID
 		updateStatement := bson.M{
 			"$set": bson.M{},
+		}
+		if requireProject {
+			updateStatement["$addToSet"].(bson.M)["projects"] = projectObjectId
 		}
 		if job.Title != "" {
 			updateStatement["$set"].(bson.M)["title"] = job.Title
@@ -153,6 +201,12 @@ func UpdateJob(db *mongo.Database) fiber.Handler {
 
 func GetJobArtifacts(db *mongo.Database) fiber.Handler {
 	return func(c *fiber.Ctx) error {
+		var projectObjectId bson.ObjectID
+		if err := GetObjectIdFromParam(c, "project_id", &projectObjectId); err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": err.Error(),
+			})
+		}
 		id := c.Params("id")
 		var artifacts = make([]bson.D, 0)
 		collection := db.Collection("artifacts")
@@ -162,8 +216,15 @@ func GetJobArtifacts(db *mongo.Database) fiber.Handler {
 				"error": "Invalid job ID",
 			})
 		}
-		filters := bson.M{"job_id": objID, "deleted": bson.M{"$ne": true}}
-		cursor, err := collection.Find(context.Background(), filters)
+		filters := bson.M{
+			"job_id":  objID,
+			"deleted": bson.M{"$ne": true},
+		}
+		findOptions := options.Find().SetSort(bson.M{
+			"created_at": -1,
+		})
+		AddPaginationToFindOptions(c, findOptions)
+		cursor, err := collection.Find(context.Background(), filters, findOptions)
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"error": err.Error(),
@@ -174,6 +235,8 @@ func GetJobArtifacts(db *mongo.Database) fiber.Handler {
 				"error": err.Error(),
 			})
 		}
+
+		SetHasMoreHeader(c, len(artifacts))
 
 		for i := range artifacts {
 			for j := range artifacts[i] {

@@ -1,0 +1,24 @@
+meta {
+  name: Update Project
+  type: http
+  seq: 4
+}
+
+put {
+  url: http://{{host}}/api/projects/:id
+  body: json
+  auth: none
+}
+
+params:path {
+  id: 67d6c335863e79ad14fb61b3
+}
+
+body:json {
+  {
+    "id": "67d6c335863e79ad14fb61b3",
+    "title": "Financial Fraud Investigation",
+    "number": "2025-001",
+    "status": "in_progress"
+  }
+}
