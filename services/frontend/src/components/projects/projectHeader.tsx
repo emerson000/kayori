@@ -45,7 +45,7 @@ export default function ProjectHeader({
             </div>
         </div>
         <div className="flex flex-col lg:flex-row justify-between">
-            <ul className="menu menu-horizontal bg-base-200 rounded-box my-2 overflow-x-auto w-full lg:w-auto">
+            <ul className="menu menu-horizontal bg-base-200 rounded-box my-2 overflow-x-auto flex-nowrap w-full lg:w-auto">
                 {menuItems.map((item) => (
                     <li key={item.href}>
                         <a href={`/projects/${project.id}/${item.href}`}

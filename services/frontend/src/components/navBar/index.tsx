@@ -1,3 +1,5 @@
+'use client';
+
 import Link from "next/link";
 
 const navItems = [
@@ -42,7 +44,12 @@ export function BodyWithSidebar(props: { children: React.ReactNode }) {
       <label htmlFor="my-drawer-3" aria-label="close sidebar" className="drawer-overlay"></label>
       <ul className="menu bg-base-200 min-h-full w-80 p-4">
         {navItems && navItems.map((item) => <li key={item.href}>
-          <Link href={item.href}>{item.label}</Link>
+          <Link href={item.href} onClick={() => {
+            const drawerCheckbox = document.getElementById('my-drawer-3') as HTMLInputElement | null;
+            if (drawerCheckbox) {
+              drawerCheckbox.checked = false;
+            }
+          }}>{item.label}</Link>
         </li>)}
       </ul>
     </div>
