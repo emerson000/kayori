@@ -73,9 +73,10 @@ export const getJobService = async () => {
 };
 
 // Update the exported methods to include projectId
-export const getJobs = async (projectId: string) => {
+export const getJobs = async (projectId: string, page: number = 1, perPage: number = 10, plainObjects: boolean = false) => {
     const service = await getJobService();
-    return service.getJobs(projectId);
+    const jobs = await service.getJobs(projectId, page, perPage);
+    return plainObjects ? jobs.map(job => ({ ...job })) : jobs;
 };
 
 export const getJob = async (projectId: string, id: string) => {

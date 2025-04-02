@@ -1,49 +1,55 @@
+'use client'
+
+import { useEffect, useState } from "react";
+import { use } from "react";
 import Link from "next/link";
 import { getProject } from "@/services/projectService";
 import { getJobs } from "@/services/jobService";
 import { IJob } from "@/models/job";
+import { Project } from "@/models/project";
 import { notFound } from "next/navigation";
 import ProjectHeader from "@/components/projects/projectHeader";
+import CollectTable from "@/components/projects/collectTable";
+import InfiniteScroll from "@/components/common/InfiniteScroll";
 
-export const dynamic = 'force-dynamic'
+export default function Page({ params }: { params: Promise<{ id: string }> }) {
+    const resolvedParams = use(params);
+    const [project, setProject] = useState<any>(null);
+    const [initialJobs, setInitialJobs] = useState<IJob[]>([]);
 
-export default async function Page({ params }: { params: Promise<{id: string}> }) {
-    const { id } = await params;
-    const jobs: IJob[] = await getJobs(id);
-    const project = await getProject(id);
-    if (!project) {
-        notFound();
-    }
+    useEffect(() => {
+        const loadInitialData = async () => {
+            const projectData = await getProject(resolvedParams.id, true);
+            if (!projectData) {
+                notFound();
+            }
+            setProject(projectData);
+            const jobs = await getJobs(resolvedParams.id, 1, 10, true);
+            setInitialJobs(jobs);
+        };
+        loadInitialData();
+    }, [resolvedParams.id]);
+
+    const loadMoreJobs = async (page: number) => {
+        return getJobs(resolvedParams.id, page, 10, true);
+    };
+
+    if (!project) return <div>Loading...</div>;
+
     return <div>
-        <ProjectHeader project={project} currentPage="collect" />
+        <ProjectHeader project={new Project(project)} currentPage="collect" />
         <div className="overflow-x-auto">
             <ul className="menu menu-horizontal bg-base-200 float-right">
-                <li><Link href={`/projects/${id}/collect/new`}>New</Link></li>
+                <li><Link href={`/projects/${resolvedParams.id}/collect/new`}>New</Link></li>
             </ul>
-            <table className="table">
-                <thead>
-                    <tr>
-                        <th>Title</th>
-                        <th>Status</th>
-                        <th>Service</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {jobs.map(job => (
-                        <tr key={job.id}>
-                            <td>{job.title}</td>
-                            <td>
-                                <div className={`badge ${job.status === 'pending' ? 'badge-info' : job.status === 'done' ? 'badge-success' : ''}`}>
-                                    {job.status ? job.status.toUpperCase() : 'UNKNOWN'}
-                                </div>
-                            </td>
-                            <td>{job.service}</td>
-                            <td><Link className="btn" href={`/projects/${id}/collect/${job.id}`}>View</Link></td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
+            <InfiniteScroll
+                initialData={initialJobs}
+                loadMore={loadMoreJobs}
+            >
+                {(jobs, loading) => (
+                    <CollectTable jobs={jobs} id={resolvedParams.id} loading={loading} />
+                )}
+            </InfiniteScroll>
         </div>
     </div>
 }
