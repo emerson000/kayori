@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getProject } from "@/services/projectService";
 import { notFound } from "next/navigation";
 import ProjectHeader from "@/components/projects/projectHeader";
+import { IProject } from "@/models/project";
 const sources = [
   {
     name: 'RSS',
@@ -17,7 +18,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
     notFound();
   }
   return (<div>
-    <ProjectHeader project={project} currentPage="collect" />
+    <ProjectHeader project={project as IProject} currentPage="collect" />
     <div className="flex flex-wrap">
       {sources.map((source, index) => (
         <div className="flex-1" key={index}>

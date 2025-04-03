@@ -5,7 +5,7 @@ import { getProject } from '@/services/projectService'
 import ProjectHeader from '@/components/projects/projectHeader'
 import { getJob, getJobArtifacts } from '@/services/jobService'
 import { notFound } from 'next/navigation'
-
+import { IProject } from '@/models/project'
 export default async function Page({ params }: { params: Promise<{ id: string, job: string }> }) {
   const { id, job } = await params;
   const project = await getProject(id);
@@ -15,7 +15,7 @@ export default async function Page({ params }: { params: Promise<{ id: string, j
     notFound()
   }
   return <div>
-    <ProjectHeader project={project} currentPage="collect" />
+    <ProjectHeader project={project as IProject} currentPage="collect" />
     <h2 className="text-2xl font-bold">{jobRecord.title}</h2>
     {artifacts.map((message: any, i: number) => <MessageCard key={i} message={message} />)}
   </div>
