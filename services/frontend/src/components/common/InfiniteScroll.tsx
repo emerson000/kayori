@@ -41,18 +41,24 @@ export default function InfiniteScroll<T>({
     const handleScroll = () => {
         if (!containerRef.current) return;
         
-        const { scrollTop, scrollHeight, clientHeight } = containerRef.current;
-        if (scrollHeight - scrollTop <= clientHeight * threshold) {
+        const { scrollTop, scrollHeight, clientHeight } = document.documentElement;
+        const containerBottom = containerRef.current.getBoundingClientRect().bottom;
+        const windowHeight = window.innerHeight;
+        
+        if (containerBottom <= windowHeight * threshold) {
             loadMoreItems();
         }
     };
 
+    useEffect(() => {
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, [page, loading, hasMore]);
+
     return (
         <div 
             ref={containerRef}
-            onScroll={handleScroll}
-            className="w-full"
-            style={{ maxHeight: 'calc(100vh - 200px)', overflowY: 'auto' }}
+            className="w-full h-full"
         >
             {children(items, loading)}
         </div>

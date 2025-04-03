@@ -62,7 +62,10 @@ export const getArtifactService = async () => {
 };
 
 // Update the exported methods to include projectId
-export const getArtifacts = async (projectId: string, entityType: string, page: number = 1, perPage: number = 10) => {
+export const getArtifacts = async (projectId: string, entityType: string, page: number = 1, perPage: number = 10, plainObjects: boolean = false) => {
     const service = await getArtifactService();
+    if (plainObjects) {
+        return service.getArtifacts(projectId, entityType, page, perPage).then(artifacts => artifacts.map((artifact) => ({ ...artifact })));
+    }
     return service.getArtifacts(projectId, entityType, page, perPage);
 };

@@ -63,7 +63,17 @@ export const getProjects = async () => {
 
 export const getProject = async (id: string, plainObjects: boolean = false) => {
     const service = await getProjectService();
-    return plainObjects ? service.getProject(id).then(project => ({ ...project })) : service.getProject(id);
+    const project = await service.getProject(id);
+    if (!project) return null;
+    return plainObjects ? {
+        id: project.id,
+        title: project.title,
+        description: project.description,
+        number: project.number,
+        status: project.status,
+        created_at: project.created_at,
+        updated_at: project.updated_at,
+    } : project;
 };
 
 export const createProject = async (projectData: Omit<IProject, 'id' | 'created_at' | 'updated_at' | 'getDocumentTitle'>) => {
