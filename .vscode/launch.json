@@ -1,0 +1,24 @@
+{
+    "configurations": [
+        {
+            "name": "Docker Compose Up",
+            "type": "node",
+            "request": "launch",
+            "preLaunchTask": "docker-compose-up",
+            "postDebugTask": "docker-compose-down"
+        },
+        {
+            "name": "NextJS: Debug Server",
+            "type": "node-terminal",
+            "request": "launch",
+            "command": "npm run dev",
+            "cwd": "${workspaceFolder}/services/frontend"
+        }
+    ],
+    "compounds": [
+        {
+            "name": "Kayori Dev",
+            "configurations": ["Docker Compose Up", "NextJS: Debug Server"]
+        }
+    ]
+}
