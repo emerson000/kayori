@@ -33,9 +33,15 @@ class ArtifactService extends BaseService {
         return endpoint;
     }
 
-    async getArtifacts(projectId: string, entityType: string, page: number = 1, perPage: number = 10): Promise<IArtifact[] | INewsArticle[]> {
+    async getArtifacts(projectId: string, entityType: string, page: number = 1, perPage: number = 10, search?: string): Promise<IArtifact[] | INewsArticle[]> {
         const endpoint = this.getProjectEndpoint(projectId);
-        const data = await this.getAll<any[]>(page, perPage, endpoint, { type: entityType });
+        const params: any = { type: entityType };
+        
+        if (search) {
+            params.search = search;
+        }
+        
+        const data = await this.getAll<any[]>(page, perPage, endpoint, params);
         switch (entityType) {
             case 'news_article':
                 if (data && data.length > 0) {
@@ -62,10 +68,10 @@ export const getArtifactService = async () => {
 };
 
 // Update the exported methods to include projectId
-export const getArtifacts = async (projectId: string, entityType: string, page: number = 1, perPage: number = 10, plainObjects: boolean = false) => {
+export const getArtifacts = async (projectId: string, entityType: string, page: number = 1, perPage: number = 10, plainObjects: boolean = false, search?: string) => {
     const service = await getArtifactService();
     if (plainObjects) {
-        return service.getArtifacts(projectId, entityType, page, perPage).then(artifacts => artifacts.map((artifact) => ({ ...artifact })));
+        return service.getArtifacts(projectId, entityType, page, perPage, search).then(artifacts => artifacts.map((artifact) => ({ ...artifact })));
     }
-    return service.getArtifacts(projectId, entityType, page, perPage);
+    return service.getArtifacts(projectId, entityType, page, perPage, search);
 };

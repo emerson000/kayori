@@ -5,13 +5,14 @@ meta {
 }
 
 get {
-  url: http://{{host}}/api/projects/:id/artifacts?type=news_article
+  url: http://{{host}}/api/projects/:id/artifacts?type=news_article&search=Russia
   body: none
   auth: none
 }
 
 params:query {
   type: news_article
+  search: Russia
 }
 
 params:path {

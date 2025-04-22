@@ -184,6 +184,11 @@ func GetProjectArtifacts(db *mongo.Database) fiber.Handler {
 			"entity_type": entityType,
 		}
 
+		search := c.Query("search")
+		if search != "" {
+			filter["$text"] = bson.M{"$search": search}
+		}
+
 		findOptions := options.Find().SetSort(bson.M{"timestamp": -1})
 		AddPaginationToFindOptions(c, findOptions)
 

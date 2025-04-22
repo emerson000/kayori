@@ -25,14 +25,14 @@ export default function Page({ params, searchParams }: { params: Promise<{ id: s
                 notFound();
             }
             setProject(new Project(projectData));
-            const articles = await getArtifacts(id, "news_article", 1, 10, true);
+            const articles = await getArtifacts(id, "news_article", 1, 10, true, search as string);
             setInitialArticles(articles as unknown as NewsArticle[]);
         };
         loadInitialData();
-    }, [id]);
+    }, [id, search]);
 
     const loadMoreArticles = async (page: number) => {
-        const articles = await getArtifacts(id, "news_article", page, 10, true);
+        const articles = await getArtifacts(id, "news_article", page, 10, true, search as string);
         return articles as unknown as NewsArticle[];
     };
 
